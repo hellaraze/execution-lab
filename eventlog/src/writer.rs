@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use crc32fast::Hasher;
+use serde::Serialize;
 use std::fs::{File, OpenOptions};
 use std::io::{BufWriter, Write};
 use std::path::Path;
@@ -13,6 +14,7 @@ pub struct EventLogWriter {
 }
 
 impl EventLogWriter {
+    // new canonical API
     pub fn open_append(path: impl AsRef<Path>, stream: impl Into<String>) -> Result<Self> {
         let file = OpenOptions::new()
             .create(true)
@@ -54,8 +56,18 @@ impl EventLogWriter {
 
     pub fn flush(&mut self) -> Result<()> {
         self.out.flush().context("flush")?;
-        // fsync
         self.out.get_ref().sync_all().context("sync_all")?;
         Ok(())
+    }
+
+    // ---- compatibility layer for existing code ----
+    // old code expects: EventLogWriter::open(path) + writer.write(&Event)
+    pub fn open(path: impl AsRef<Path>) -> Result<Self> {
+        Self::open_append(path, "el:eventlog")
+    }
+
+    pub fn write<T: Serialize>(&mut self, ev: &T) -> Result<u64> {
+        let v = serde_json::to_value(ev).context("serde_json::to_value event")?;
+        self.append_json_value("event", 0, &v)
     }
 }
