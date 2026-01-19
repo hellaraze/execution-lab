@@ -1,6 +1,11 @@
 [package]
 name = "api"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
+connectors = { path = "../connectors" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+anyhow = "1"

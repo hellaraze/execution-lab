@@ -5,33 +5,28 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 
 pub struct EventLogReader {
-    reader: BufReader<File>,
+    lines: std::io::Lines<BufReader<File>>,
 }
 
 impl EventLogReader {
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, EventLogError> {
-        let file =
-            File::open(path.as_ref()).map_err(|e| EventLogError::Io(e.to_string()))?;
-
+        let f = File::open(path.as_ref())?;
         Ok(Self {
-            reader: BufReader::new(file),
+            lines: BufReader::new(f).lines(),
         })
     }
 
     pub fn next(&mut self) -> Result<Option<Event>, EventLogError> {
-        let mut line = String::new();
-        let n = self
-            .reader
-            .read_line(&mut line)
-            .map_err(|e| EventLogError::Io(e.to_string()))?;
-
-        if n == 0 {
-            return Ok(None);
+        match self.lines.next() {
+            None => Ok(None),
+            Some(line) => {
+                let line = line?;
+                if line.trim().is_empty() {
+                    return Ok(None);
+                }
+                let ev: Event = serde_json::from_str(&line)?;
+                Ok(Some(ev))
+            }
         }
-
-        let event: Event =
-            serde_json::from_str(&line).map_err(|_| EventLogError::CorruptedEntry)?;
-
-        Ok(Some(event))
     }
 }

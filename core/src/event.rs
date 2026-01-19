@@ -57,7 +57,7 @@ pub struct Event {
     pub ts_recv: Timestamp,
     pub ts_proc: Timestamp,
 
-    // Последовательность
+    // Последовательность / update id
     pub seq: Option<u64>,
     pub schema_version: u16,
 
@@ -98,6 +98,8 @@ pub enum EventPayload {
         from: u64,
         to: u64,
     },
+    ResyncStarted,
+    ResyncFinished,
     Order {
         order_id: String,
         price: f64,

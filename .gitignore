@@ -4,3 +4,15 @@
 .DS_Store
 .idea/
 .vscode/
+# runtime logs
+events.log
+events_*.log
+
+# build
+target/
+# runtime logs
+events.log
+events_*.log
+
+# build
+target/

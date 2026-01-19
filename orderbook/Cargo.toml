@@ -1,6 +1,11 @@
 [package]
 name = "orderbook"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
+thiserror.workspace = true
+serde.workspace = true
+ordered-float = "4"

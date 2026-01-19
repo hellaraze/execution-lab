@@ -1,3 +1,3 @@
-pub mod writer;
-pub mod reader;
 pub mod error;
+pub mod reader;
+pub mod writer;

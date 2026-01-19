@@ -3,11 +3,8 @@ use thiserror::Error;
 #[derive(Debug, Error)]
 pub enum EventLogError {
     #[error("io error: {0}")]
-    Io(String),
+    Io(#[from] std::io::Error),
 
-    #[error("serialization error: {0}")]
-    Serde(String),
-
-    #[error("corrupted log entry")]
-    CorruptedEntry,
+    #[error("json error: {0}")]
+    Json(#[from] serde_json::Error),
 }
