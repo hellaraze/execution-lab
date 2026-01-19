@@ -72,3 +72,15 @@ fn golden_replay_hashes_match() -> Result<()> {
 
     Ok(())
 }
+
+#[test]
+fn replay_is_deterministic_double_run() -> Result<()> {
+    let log_path = "tests/data/golden_events_book.log";
+    let steps = 200;
+
+    let h1 = run_and_collect_hashes(log_path, steps)?;
+    let h2 = run_and_collect_hashes(log_path, steps)?;
+
+    anyhow::ensure!(h1 == h2, "replay is NOT deterministic");
+    Ok(())
+}
