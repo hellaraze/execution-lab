@@ -13,7 +13,7 @@ fn chain_step(prev: u64, state: u64) -> u64 {
     u64::from_le_bytes(out.as_bytes()[0..8].try_into().unwrap())
 }
 
-fn run_and_collect_chain_hashes(path: &str, max_events: usize) -> Result<Vec<u64>> {
+pub fn run_and_collect_chain_hashes(path: &str, max_events: usize) -> Result<Vec<u64>> {
     let mut r = EventLogReader::open(path).with_context(|| format!("open log: {}", path))?;
     let mut book = OrderBook::new();
 
