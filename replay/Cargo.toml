@@ -13,3 +13,4 @@ orderbook = { path = "../orderbook" }
 anyhow = "1"
 blake3 = "1"
 serde_json = "1"
+uuid = "1"
