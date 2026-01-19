@@ -6,6 +6,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+fs2 = "0.4"
+blake3 = "1"
 el_core = { path = "../core" }
 serde_json.workspace = true
 thiserror.workspace = true
@@ -14,3 +16,4 @@ anyhow = "1"
 crc32fast = "1"
 serde = { version = "1", features = ["derive"] }
 serde_bytes = "0.11"
+base64 = "0.22"

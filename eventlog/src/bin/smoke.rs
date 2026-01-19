@@ -1,22 +1,28 @@
 use anyhow::Result;
-use eventlog::{EventLogReader, EventLogWriter};
-use serde_json::json;
+use eventlog::reader::EventLogReader;
 
 fn main() -> Result<()> {
-    let path = "/tmp/el_events.ndjson";
-    let _ = std::fs::remove_file(path);
+    let path = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "/tmp/binance_depth.ndjson".to_string());
 
-    let mut w = EventLogWriter::open_append(path, "smoke:test")?;
-    w.append_json_value("depth", 111, &json!({"bids":[[1.0,2.0]],"asks":[[3.0,4.0]]}))?;
-    w.append_json_value("bbo", 222, &json!({"bid":1.0,"ask":3.0}))?;
-    w.append_json_value("trade", 333, &json!({"px":2.0,"qty":0.5}))?;
-    w.flush()?;
+    let mut r = EventLogReader::open(&path)?;
 
-    let mut r = EventLogReader::open(path)?;
-    while let Some(env) = r.next()? {
-        println!("seq={} ts={} kind={} stream={} payload_len={}",
-            env.seq, env.ts_ns, env.kind, env.stream, env.payload.len()
+    let mut n = 0usize;
+    while let Some((env, payload)) = r.next()? {
+        println!(
+            "seq={} ts_ns={} kind={} stream={} payload_bytes={}",
+            env.seq,
+            env.ts_ns,
+            env.kind,
+            env.stream,
+            payload.len()
         );
+        n += 1;
+        if n >= 5 {
+            break;
+        }
     }
+
     Ok(())
 }

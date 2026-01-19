@@ -4,7 +4,14 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
+use base64::Engine;
 use crate::envelope::EventEnvelope;
+
+fn crc32(bytes: &[u8]) -> u32 {
+    let mut h = Hasher::new();
+    h.update(bytes);
+    h.finalize()
+}
 
 pub struct EventLogReader {
     r: BufReader<File>,
@@ -21,7 +28,7 @@ impl EventLogReader {
         })
     }
 
-    pub fn next(&mut self) -> Result<Option<EventEnvelope>> {
+    pub fn next(&mut self) -> Result<Option<(EventEnvelope, Vec<u8>)>> {
         self.line_buf.clear();
         let n = self.r.read_line(&mut self.line_buf)?;
         if n == 0 {
@@ -31,14 +38,15 @@ impl EventLogReader {
         let env: EventEnvelope =
             serde_json::from_str(self.line_buf.trim_end()).context("parse envelope json")?;
 
-        let mut h = Hasher::new();
-        h.update(&env.payload);
-        let checksum = h.finalize();
+        let payload = base64::engine::general_purpose::STANDARD
+            .decode(&env.payload_b64)
+            .context("base64 decode payload")?;
 
+        let checksum = crc32(&payload);
         if checksum != env.checksum {
             anyhow::bail!("checksum mismatch: seq={}", env.seq);
         }
 
-        Ok(Some(env))
+        Ok(Some((env, payload)))
     }
 }

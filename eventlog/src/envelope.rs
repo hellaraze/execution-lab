@@ -6,7 +6,7 @@ pub struct EventEnvelope {
     pub ts_ns: u64,
     pub stream: String,
     pub kind: String,
-    #[serde(with = "serde_bytes")]
-    pub payload: Vec<u8>,
+    /// base64 bytes in json
+    pub payload_b64: String,
     pub checksum: u32,
 }

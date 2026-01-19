@@ -1,18 +1,16 @@
-/target/
-/**/target/
-**/*.rs.bk
+/target
+**/target
+*.log
+*.ndjson
+*.ndjsonl
+*.jsonl
+*.gz
+*.zst
+*.parquet
+*.csv
+*.tmp
 .DS_Store
-.idea/
-.vscode/
-# runtime logs
-events.log
-events_*.log
-
-# build
-target/
-# runtime logs
-events.log
-events_*.log
-
-# build
-target/
+.env
+.env.*
+.idea
+.vscode
