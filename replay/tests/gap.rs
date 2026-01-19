@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 
-mod golden; // reuse run_and_collect_chain_hashes
+mod util;
 
 fn ts(n: i64) -> Timestamp {
     Timestamp::new(n, TimeSource::Process)
@@ -57,7 +57,7 @@ fn gap_is_detected_and_fails_fast() -> Result<()> {
     fs::write(&dir, corrupted)?;
 
     // 3) run replay: must fail with GAP
-    let err = golden::run_and_collect_chain_hashes(dir.to_str().unwrap(), 80).unwrap_err();
+    let err = util::run_and_collect_chain_hashes(dir.to_str().unwrap(), 80).unwrap_err();
     let msg = err.to_string();
     assert!(
         msg.contains("GAP DETECTED"),
