@@ -50,3 +50,15 @@ impl OrderBook {
         self.asks.iter().next().map(|(p, q)| (p.0, *q))
     }
 }
+
+pub mod invariants;
+pub mod state_hash;
+
+impl OrderBook {
+    pub fn check_invariants(&self) -> Result<(), String> {
+        let mut set = invariants::InvariantSet::new();
+        set.push(invariants::NoNegativeQty);
+        set.push(invariants::NoCross);
+        set.run_all(self)
+    }
+}
