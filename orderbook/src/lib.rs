@@ -15,7 +15,12 @@ impl OrderBook {
         }
     }
 
-    pub fn apply_bid(&mut self, price: f64, qty: f64) {
+    pub fn apply_bid(&mut self, mut price: f64, mut qty: f64) {
+        if !price.is_finite() || !qty.is_finite() {
+            panic!("non-finite bid update: price={} qty={}", price, qty);
+        }
+        if price == 0.0 { price = 0.0; }
+        if qty == 0.0 { qty = 0.0; }
         let p = OrderedFloat(price);
         if qty == 0.0 {
             self.bids.remove(&p);
@@ -24,7 +29,12 @@ impl OrderBook {
         }
     }
 
-    pub fn apply_ask(&mut self, price: f64, qty: f64) {
+    pub fn apply_ask(&mut self, mut price: f64, mut qty: f64) {
+        if !price.is_finite() || !qty.is_finite() {
+            panic!("non-finite ask update: price={} qty={}", price, qty);
+        }
+        if price == 0.0 { price = 0.0; }
+        if qty == 0.0 { qty = 0.0; }
         let p = OrderedFloat(price);
         if qty == 0.0 {
             self.asks.remove(&p);
