@@ -11,9 +11,11 @@ fn run_and_collect_hashes(path: &str, max_events: usize) -> Result<Vec<u64>> {
     let mut n: usize = 0;
 
     while let Some((env, payload_bytes)) = r.next()? {
+        // Parse event
         let ev: Event = serde_json::from_slice(&payload_bytes)
-            .with_context(|| format!("parse core::Event json (seq={})", env.seq))?;
+            .with_context(|| format!("parse core::Event json (step={} env.seq={})", n + 1, env.seq))?;
 
+        // Apply
         match (&ev.event_type, &ev.payload) {
             (EventType::BookSnapshot, EventPayload::BookSnapshot { bids, asks }) => {
                 book = OrderBook::new();
@@ -25,12 +27,27 @@ fn run_and_collect_hashes(path: &str, max_events: usize) -> Result<Vec<u64>> {
             _ => {}
         }
 
-        book.check_invariants()
-            .map_err(|e| anyhow::anyhow!("invariant fail at n={}: {}", n + 1, e))?;
+        // Invariants with trace
+        if let Err(e) = book.check_invariants() {
+            let bid = book.top_bid();
+            let ask = book.top_ask();
+            let h = book.state_hash64();
+            anyhow::bail!(
+                "INVARIANT FAIL step={} env.seq={} event_type={:?} bid={:?} ask={:?} hash64={} err={}",
+                n + 1,
+                env.seq,
+                ev.event_type,
+                bid,
+                ask,
+                h,
+                e
+            );
+        }
 
-        out.push(book.state_hash64());
+        let h = book.state_hash64();
+        out.push(h);
+
         n += 1;
-
         if n >= max_events {
             break;
         }
@@ -65,7 +82,7 @@ fn golden_replay_hashes_match() -> Result<()> {
 
     anyhow::ensure!(
         expected == actual,
-        "golden mismatch: expected {} hashes, got {}",
+        "GOLDEN MISMATCH: expected {} hashes, got {}",
         expected.len(),
         actual.len()
     );
@@ -81,6 +98,6 @@ fn replay_is_deterministic_double_run() -> Result<()> {
     let h1 = run_and_collect_hashes(log_path, steps)?;
     let h2 = run_and_collect_hashes(log_path, steps)?;
 
-    anyhow::ensure!(h1 == h2, "replay is NOT deterministic");
+    anyhow::ensure!(h1 == h2, "REPLAY NOT DETERMINISTIC");
     Ok(())
 }
