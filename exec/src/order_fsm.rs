@@ -18,6 +18,10 @@ impl OrderFsm {
         self.state = match (self.state, ev) {
             (New, OrderPlaced) => Placed,
             (Placed, OrderAccepted) => Accepted,
+            (Placed, OrderRejected) => Rejected,
+            (Accepted, OrderRejected) => Rejected,
+            (PartiallyFilled, OrderRejected) => Rejected,
+
             (Accepted, OrderPartiallyFilled) => PartiallyFilled,
             (PartiallyFilled, OrderPartiallyFilled) => PartiallyFilled,
             (Accepted, OrderFilled) => Filled,

@@ -3,6 +3,7 @@ pub enum OrderState {
     New,
     Placed,
     Accepted,
+    Rejected,
     PartiallyFilled,
     Filled,
     Canceled,
