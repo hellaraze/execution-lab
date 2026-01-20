@@ -4,3 +4,5 @@ pub mod order;
 pub mod util;
 pub mod order_state;
 pub mod order_fsm;
+
+pub mod order_fsm_error;

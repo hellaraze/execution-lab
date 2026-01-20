@@ -11,7 +11,7 @@ impl OrderFsm {
         Self { state: OrderState::New }
     }
 
-    pub fn apply(&mut self, ev: ExecEvent) {
+    pub fn apply(&mut self, ev: ExecEvent) -> Result<(), crate::order_fsm_error::OrderFsmError> {
         use ExecEvent::*;
         use OrderState::*;
 
@@ -28,7 +28,8 @@ impl OrderFsm {
             (PartiallyFilled, OrderFilled) => Filled,
             (Accepted, OrderCanceled) => Canceled,
             (PartiallyFilled, OrderCanceled) => Canceled,
-            (s, _) => s, // invalid transitions are ignored for now
+            (s, ev) => return Err(crate::order_fsm_error::OrderFsmError::InvalidTransition { state: s, event: ev }),
         };
+        Ok(())
     }
 }
