@@ -109,18 +109,34 @@ pub enum EventPayload {
         to: u64,
     },
     ResyncStarted,
-    ResyncFinished,
-    Order {
+    ResyncFinished, 
+    // Execution (strict)
+    OrderSubmit {
         order_id: String,
+        side: String,
         price: f64,
         qty: f64,
+    },
+    OrderAck {
+        order_id: String,
+    },
+    OrderReject {
+        order_id: String,
+        reason: String,
     },
     Fill {
         order_id: String,
+        fill_id: String,
         price: f64,
         qty: f64,
     },
-    Risk {
+    CancelRequest {
+        order_id: String,
+    },
+    CancelAck {
+        order_id: String,
+    },
+   Risk {
         state: String,
     },
     KillSwitch {
