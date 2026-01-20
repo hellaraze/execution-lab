@@ -40,4 +40,23 @@ mod tests {
         let msg = format!("{e}");
         assert!(msg.contains("regression"));
     }
+
+
+    #[test]
+    fn ignores_events_without_seq() {
+        let mut t = SeqTracker::new();
+        let mut e = mk(10);
+        e.seq = None;
+        assert_eq!(t.observe(&e).unwrap(), None);
+    }
+
+    #[test]
+    fn duplicate_seq_is_error() {
+        let mut t = SeqTracker::new();
+        t.observe(&mk(10)).unwrap();
+        let e = t.observe(&mk(10)).err().unwrap();
+        let msg = format!("{e}");
+        assert!(msg.contains("regression"));
+    }
+
 }

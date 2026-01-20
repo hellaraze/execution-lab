@@ -4,6 +4,8 @@ use el_core::event::{Event, EventPayload, EventType, Exchange};
 use el_core::time::{TimeSource, Timestamp};
 use uuid::Uuid;
 
+const EVENT_ID_NAMESPACE: Uuid = Uuid::from_bytes([0x45,0x4c,0x2d,0x45,0x56,0x54,0x2d,0x49,0x44,0x2d,0x4e,0x53,0x50,0x41,0x43,0x45]);
+
 fn parse_time_source(s: &str) -> Option<TimeSource> {
     match s {
         "Exchange" => Some(TimeSource::Exchange),
@@ -25,6 +27,40 @@ fn ts_opt_from_wire(ts: &Option<WireTs>) -> Result<Option<Timestamp>, DecodeErro
         None => Ok(None),
         Some(x) => Ok(Some(ts_from_wire(x)?)),
     }
+}
+
+
+fn event_id_from_wire(w: &WireEvent, event_type: &EventType) -> Uuid {
+    // Deterministic ID for replay/audit: same wire -> same id
+    // NOTE: payload is intentionally excluded (can be large); we key by stream+type+seq+timestamps.
+    let mut key = String::new();
+    key.push_str(&w.exchange);
+    key.push('|');
+    key.push_str(&w.symbol);
+    key.push('|');
+    key.push_str(match event_type {
+        EventType::BookSnapshot => "BookSnapshot",
+        EventType::BookDelta => "BookDelta",
+        EventType::Trade => "Trade",
+        EventType::TickerBbo => "TickerBbo",
+        _ => "Other",
+    });
+    key.push('|');
+    if let Some(seq) = w.seq {
+        key.push_str(&seq.to_string());
+    }
+    key.push('|');
+    key.push_str(&w.schema_version.to_string());
+    key.push('|');
+    key.push_str(&w.ts_recv.nanos.to_string());
+    key.push('|');
+    key.push_str(&w.ts_proc.nanos.to_string());
+    if let Some(tsx) = &w.ts_exchange {
+        key.push('|');
+        key.push_str(&tsx.nanos.to_string());
+    }
+
+    Uuid::new_v5(&EVENT_ID_NAMESPACE, key.as_bytes())
 }
 
 fn exchange_from_str(s: &str) -> Exchange {
@@ -87,7 +123,7 @@ pub fn decode_event(w: WireEvent) -> Result<Event, DecodeError> {
     };
 
     Ok(Event {
-        id: Uuid::new_v4(),
+        id: event_id_from_wire(&w, &event_type),
         event_type,
         exchange: exchange_from_str(&w.exchange),
         symbol: w.symbol,
