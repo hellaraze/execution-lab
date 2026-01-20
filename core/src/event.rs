@@ -48,12 +48,9 @@ pub enum ExecEvent {
     OrderAccepted,
     OrderRejected,
     OrderPartiallyFilled,
-
-
     OrderFilled,
     OrderCanceled,
 }
-
 
 /// Базовое событие платформы (event-sourcing)
 #[derive(Debug, Clone, Serialize, Deserialize)]
