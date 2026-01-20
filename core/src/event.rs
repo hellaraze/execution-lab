@@ -35,6 +35,7 @@ pub enum EventType {
     OrderAck,
     OrderReject,
     Fill,
+    CancelRequest,
     CancelAck,
 
     // Risk
