@@ -10,8 +10,7 @@ members = [
   "exec",
   "strategy",
   "api",
-  "md",
-]
+  ]
 resolver = "2"
 
 [workspace.package]

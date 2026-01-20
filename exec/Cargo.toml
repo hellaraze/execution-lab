@@ -6,6 +6,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+el_core = { path = "../core" }
 eventlog = { path = "../eventlog" }
 serde.workspace = true
 serde_json.workspace = true
