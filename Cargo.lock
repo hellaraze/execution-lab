@@ -239,6 +239,7 @@ name = "exec"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "blake3",
  "el_core",
  "eventlog",
  "serde",
