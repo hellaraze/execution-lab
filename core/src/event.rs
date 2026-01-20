@@ -42,6 +42,19 @@ pub enum EventType {
     KillSwitch,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ExecEvent {
+    OrderPlaced,
+    OrderAccepted,
+    OrderRejected,
+    OrderPartiallyFilled,
+
+
+    OrderFilled,
+    OrderCanceled,
+}
+
+
 /// Базовое событие платформы (event-sourcing)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
