@@ -14,3 +14,5 @@ mod golden_tests;
 mod store_tests;
 #[cfg(test)]
 mod snapshot_tests;
+pub mod events; pub mod fold;
+pub mod fold_error;
