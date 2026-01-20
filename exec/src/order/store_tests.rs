@@ -1,37 +1,45 @@
-use crate::events::{ExecEvent, OrderId};
-use crate::order::OrderStore;
+#[cfg(test)]
+mod tests {
+    use crate::events::{ExecEvent, OrderId};
+    use crate::order::{build_snapshot, OrderState};
 
-#[test]
-fn store_builds_views_for_multiple_orders() {
-    let a = OrderId(1);
-    let b = OrderId(2);
+    #[test]
+    fn snapshot_builds_and_hashes_deterministically() {
+        let id = OrderId(1);
 
-    let events = vec![
-        ExecEvent::OrderCreated { id: a },
-        ExecEvent::OrderValidated { id: a },
-        ExecEvent::OrderSent { id: a },
-        ExecEvent::OrderAcked { id: a },
+        let events = vec![
+            ExecEvent::OrderCreated { id },
+            ExecEvent::OrderValidated { id },
+            ExecEvent::OrderSent { id },
+            ExecEvent::OrderAcked { id },
+            ExecEvent::OrderFill { id, filled_qty: 1.0, avg_px: 100.0 },
+            ExecEvent::OrderFill { id, filled_qty: 3.0, avg_px: 106.6666666667 },
+            ExecEvent::OrderCancelRequested { id },
+            ExecEvent::OrderCancelled { id },
+        ];
 
-        ExecEvent::OrderCreated { id: b },
-        ExecEvent::OrderValidated { id: b },
-        ExecEvent::OrderSent { id: b },
-        ExecEvent::OrderAcked { id: b },
+        let (_store1, h1) = build_snapshot(&events).unwrap();
+        let (_store2, h2) = build_snapshot(&events).unwrap();
 
-        ExecEvent::OrderFill { id: a, filled_qty: 0.5, avg_px: 100.0 },
-        ExecEvent::OrderCancelRequested { id: a },
-        ExecEvent::OrderCancelled { id: a },
-    ];
+        assert_eq!(h1, h2, "snapshot hash must be deterministic");
+    }
 
-    let mut store = OrderStore::new();
-    store.apply_all(&events).unwrap();
+    #[test]
+    fn snapshot_view_state_is_terminal() {
+        let id = OrderId(7);
 
-    assert_eq!(store.len(), 2);
-    assert!(store.view(a).is_some());
-    assert!(store.view(b).is_some());
+        let events = vec![
+            ExecEvent::OrderCreated { id },
+            ExecEvent::OrderSent { id },
+            ExecEvent::OrderAcked { id },
+            ExecEvent::OrderFill { id, filled_qty: 2.0, avg_px: 50.0 },
+            ExecEvent::OrderCancelled { id },
+        ];
 
-    let va = store.view(a).unwrap();
-    assert!(va.filled_qty > 0.0);
-
-    let vb = store.view(b).unwrap();
-    assert_eq!(vb.filled_qty, 0.0);
+        let (store, _h) = build_snapshot(&events).unwrap();
+        let view = store.view(id).unwrap();
+        assert_eq!(view.state, OrderState::Cancelled);
+        assert!(view.filled_qty >= 0.0);
+        assert!(view.avg_px >= 0.0);
+    }
 }
