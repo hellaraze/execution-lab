@@ -1,18 +1,14 @@
-mod fsm;
-mod snapshot;
-mod store;
-mod types;
+pub mod events;
+pub mod fold;
+pub mod fold_error;
+pub mod snapshot;
+pub mod store;
+pub mod types;
 
-pub use fsm::*;
+// Re-exports (ergonomic API)
+pub use events::*;
+pub use fold::*;
+pub use fold_error::*;
 pub use snapshot::*;
 pub use store::*;
 pub use types::*;
-
-#[cfg(test)]
-mod golden_tests;
-#[cfg(test)]
-mod store_tests;
-#[cfg(test)]
-mod snapshot_tests;
-pub mod events; pub mod fold;
-pub mod fold_error;

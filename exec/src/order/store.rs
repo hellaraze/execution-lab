@@ -1,58 +1,80 @@
 use std::collections::HashMap;
 
+use anyhow::Result;
+
 use crate::events::{ExecEvent, OrderId};
-use crate::order::{apply, FsmError, OrderView};
+use super::types::{OrderState, OrderView};
 
 #[derive(Debug, Default)]
 pub struct OrderStore {
-    views: HashMap<OrderId, OrderView>,
+    by_id: HashMap<OrderId, OrderView>,
 }
 
 impl OrderStore {
     pub fn new() -> Self {
-        Self { views: HashMap::new() }
+        Self { by_id: HashMap::new() }
     }
 
-    pub fn view(&self, id: OrderId) -> Option<&OrderView> {
-        self.views.get(&id)
-    }
-
-    pub fn upsert_default(&mut self, id: OrderId) -> &mut OrderView {
-        self.views.entry(id).or_insert_with(OrderView::new)
-    }
-
-    pub fn apply_event(&mut self, ev: &ExecEvent) -> Result<(), FsmError> {
-        let id = match ev {
-            ExecEvent::OrderCreated { id }
-            | ExecEvent::OrderValidated { id }
-            | ExecEvent::OrderSent { id }
-            | ExecEvent::OrderAcked { id }
-            | ExecEvent::OrderFill { id, .. }
-            | ExecEvent::OrderCancelRequested { id }
-            | ExecEvent::OrderCancelled { id }
-            | ExecEvent::OrderRejected { id, .. }
-            | ExecEvent::OrderExpired { id } => *id,
-        };
-
-        let view = self.upsert_default(id);
-        apply(view, id, ev)
-    }
-
-    pub fn apply_all<'a, I>(&mut self, events: I) -> Result<(), FsmError>
-    where
-        I: IntoIterator<Item = &'a ExecEvent>,
-    {
+    pub fn apply_all(&mut self, events: &[ExecEvent]) -> Result<()> {
         for ev in events {
-            self.apply_event(ev)?;
+            self.apply(ev)?;
         }
         Ok(())
     }
 
-    pub fn len(&self) -> usize {
-        self.views.len()
+    pub fn apply(&mut self, ev: &ExecEvent) -> Result<()> {
+        match ev {
+            ExecEvent::OrderCreated { id } => {
+                self.by_id.insert(*id, OrderView::new());
+            }
+            ExecEvent::OrderValidated { id } => {
+                let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
+                v.state = OrderState::Validated;
+            }
+            ExecEvent::OrderSent { id } => {
+                let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
+                v.state = OrderState::Sent;
+            }
+            ExecEvent::OrderAcked { id } => {
+                let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
+                v.state = OrderState::Acknowledged;
+            }
+            ExecEvent::OrderFill { id, filled_qty, avg_px } => {
+                if !filled_qty.is_finite() || !avg_px.is_finite() || *filled_qty < 0.0 || *avg_px < 0.0 {
+                    anyhow::bail!("invalid fill numbers: filled_qty={} avg_px={}", filled_qty, avg_px);
+                }
+                let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
+                v.filled_qty = *filled_qty;
+                v.avg_px = *avg_px;
+
+                // state update
+                if *filled_qty == 0.0 {
+                    // no-op
+                } else if v.state == OrderState::Acknowledged || v.state == OrderState::PartiallyFilled {
+                    v.state = OrderState::PartiallyFilled;
+                }
+            }
+            ExecEvent::OrderCancelRequested { id } => {
+                let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
+                v.state = OrderState::CancelRequested;
+            }
+            ExecEvent::OrderCancelled { id } => {
+                let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
+                v.state = OrderState::Cancelled;
+            }
+            ExecEvent::OrderRejected { id, .. } => {
+                let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
+                v.state = OrderState::Rejected;
+            }
+            ExecEvent::OrderExpired { id } => {
+                let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
+                v.state = OrderState::Expired;
+            }
+        }
+        Ok(())
     }
 
-    pub fn is_empty(&self) -> bool {
-        self.views.is_empty()
+    pub fn view(&self, id: OrderId) -> Option<&OrderView> {
+        self.by_id.get(&id)
     }
 }

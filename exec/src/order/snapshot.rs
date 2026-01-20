@@ -1,12 +1,19 @@
 use crate::events::ExecEvent;
-use crate::order::{FsmError, OrderStore};
+use crate::order::OrderStore;
 use crate::util::stable_hash_u64;
+
+
+#[derive(Debug, thiserror::Error)]
+pub enum FsmError {
+    #[error("order snapshot error: {0}")]
+    Other(String),
+}
 
 /// Build deterministic snapshot (OrderStore) from ExecEvent stream,
 /// plus stable hash of the entire state for golden/replay testing.
 pub fn build_snapshot(events: &[ExecEvent]) -> Result<(OrderStore, u64), FsmError> {
     let mut store = OrderStore::new();
-    store.apply_all(events)?;
+    store.apply_all(events).map_err(|e| FsmError::Other(e.to_string()))?;
 
     // Hash is based on a stable, deterministic representation.
     // We serialize the internal views map as sorted (by OrderId).
@@ -36,7 +43,7 @@ pub fn build_snapshot(events: &[ExecEvent]) -> Result<(OrderStore, u64), FsmErro
     for id_u in ids {
         let id = crate::events::OrderId(id_u);
         let view = store.view(id).expect("id seen in events must exist in store");
-        let bytes = serde_json::to_vec(view).expect("serialize OrderView");
+        let bytes = serde_json::to_vec(&view).expect("serialize OrderView");
         pairs.push((id_u, bytes));
     }
 
