@@ -1,6 +1,7 @@
 use anyhow::Result;
 use el_core::event::{Event, EventPayload, EventType, Exchange};
 use el_core::time::{Timestamp, TimeSource};
+use el_core::instrument::InstrumentKey;
 use eventlog::EventLogWriter;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
@@ -12,6 +13,7 @@ fn make_delta(p: f64, q: f64) -> Event {
         event_type: EventType::BookDelta,
         exchange: Exchange::Binance,
         symbol: "BTCUSDT".to_string(),
+        instrument: InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
         ts_exchange: None,
         ts_recv: Timestamp::new(0, TimeSource::Receive),
         ts_proc: Timestamp::new(0, TimeSource::Process),

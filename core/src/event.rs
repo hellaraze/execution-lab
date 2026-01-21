@@ -1,4 +1,5 @@
 use crate::time::Timestamp;
+use crate::instrument::InstrumentKey;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -62,6 +63,8 @@ pub struct Event {
     // Идентификация
     pub exchange: Exchange,
     pub symbol: String,
+
+    pub instrument: InstrumentKey,
 
     // Временные метки
     pub ts_exchange: Option<Timestamp>,

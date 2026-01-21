@@ -1,6 +1,7 @@
 use crate::decode::DecodeError;
 use crate::wire::{BookLevels, TickerBbo, WireEvent, WireTs};
 use el_core::event::{Event, EventPayload, EventType, Exchange};
+use el_core::instrument::InstrumentKey;
 use el_core::time::{TimeSource, Timestamp};
 use uuid::Uuid;
 
@@ -122,11 +123,15 @@ pub fn decode_event(w: WireEvent) -> Result<Event, DecodeError> {
         _ => return Err(DecodeError::Unsupported(w.event_type)),
     };
 
+    let symbol = w.symbol.clone();
+
     Ok(Event {
         id: event_id_from_wire(&w, &event_type),
         event_type,
         exchange: exchange_from_str(&w.exchange),
         symbol: w.symbol,
+
+        instrument: InstrumentKey::new(exchange_from_str(&w.exchange), symbol),
 
         ts_exchange: ts_opt_from_wire(&w.ts_exchange)?,
         ts_recv: ts_from_wire(&w.ts_recv)?,

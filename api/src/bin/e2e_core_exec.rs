@@ -29,6 +29,7 @@ fn mk_event(event_type: EventType, payload: EventPayload) -> Event {
         event_type,
         exchange: Exchange::Binance,
         symbol: "BTCUSDT".to_string(),
+        instrument: el_core::instrument::InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
         ts_exchange: None,
         ts_recv: Timestamp::new(t, TimeSource::Receive),
         ts_proc: Timestamp::new(t, TimeSource::Process),

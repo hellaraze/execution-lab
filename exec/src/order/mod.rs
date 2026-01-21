@@ -14,3 +14,6 @@ pub use snapshot::*;
 pub use store::*;
 pub use types::*;
 pub use bridge::*;
+
+#[cfg(test)]
+mod snapshot_multi_tests;

@@ -1,5 +1,6 @@
 use el_core::event::{Event, EventPayload, EventType, Exchange};
 use el_core::time::{Timestamp, TimeSource};
+use el_core::instrument::InstrumentKey;
 use eventlog::writer::EventLogWriter;
 use futures_util::StreamExt;
 use orderbook::OrderBook;
@@ -70,6 +71,7 @@ fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, la
         event_type: EventType::BookSnapshot,
         exchange: Exchange::Binance,
         symbol: symbol.to_string(),
+        instrument: InstrumentKey::new(Exchange::Binance, symbol.to_string()),
         ts_exchange: None,
         ts_recv: ts(now, TimeSource::Receive),
         ts_proc: ts(now, TimeSource::Process),
@@ -91,6 +93,7 @@ fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, curre
         event_type: EventType::GapDetected,
         exchange: Exchange::Binance,
         symbol: symbol.to_string(),
+        instrument: InstrumentKey::new(Exchange::Binance, symbol.to_string()),
         ts_exchange: None,
         ts_recv: ts(now, TimeSource::Receive),
         ts_proc: ts(now, TimeSource::Process),
@@ -111,6 +114,7 @@ fn emit_resync_started(writer: &mut EventLogWriter, symbol: &str, current_u: u64
         event_type: EventType::ResyncStarted,
         exchange: Exchange::Binance,
         symbol: symbol.to_string(),
+        instrument: InstrumentKey::new(Exchange::Binance, symbol.to_string()),
         ts_exchange: None,
         ts_recv: ts(now, TimeSource::Receive),
         ts_proc: ts(now, TimeSource::Process),
@@ -199,6 +203,7 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
             event_type: EventType::BookDelta,
             exchange: Exchange::Binance,
             symbol: d.symbol.clone(),
+            instrument: InstrumentKey::new(Exchange::Binance, d.symbol.clone()),
 
             ts_exchange: Some(ts((d.event_time_ms as i64) * 1_000_000, TimeSource::Exchange)),
             ts_recv: ts(now, TimeSource::Receive),

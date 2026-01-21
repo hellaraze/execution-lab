@@ -1,6 +1,7 @@
 use anyhow::Result;
 use el_core::event::{Event, EventPayload, EventType, Exchange};
 use el_core::time::{TimeSource, Timestamp};
+use el_core::instrument::InstrumentKey;
 use eventlog::EventLogWriter;
 use eventlog::writer::Durability;
 use std::collections::HashMap;
@@ -23,6 +24,7 @@ fn main() -> Result<()> {
         event_type: EventType::BookSnapshot,
         exchange: Exchange::Binance,
         symbol: "BTCUSDT".to_string(),
+        instrument: InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
         ts_exchange: None,
         ts_recv: ts(1),
         ts_proc: ts(1),
@@ -51,6 +53,7 @@ fn main() -> Result<()> {
             event_type: EventType::BookDelta,
             exchange: Exchange::Binance,
             symbol: "BTCUSDT".to_string(),
+              instrument: InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
             ts_exchange: None,
             ts_recv: ts(1 + k as i64),
             ts_proc: ts(1 + k as i64),
