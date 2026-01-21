@@ -49,11 +49,6 @@ struct DepthDiff {
     asks: Vec<[String; 2]>,
 }
 
-#[derive(Debug, Deserialize)]
-struct StreamEnvelope<T> {
-    data: T,
-}
-
 async fn fetch_snapshot(symbol: &str, limit: u32) -> anyhow::Result<DepthSnapshot> {
     let url = format!(
         "https://api.binance.com/api/v3/depth?symbol={}&limit={}",
