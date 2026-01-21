@@ -25,15 +25,15 @@ pub fn build_snapshot(events: &[ExecEvent]) -> Result<(OrderStore, u64), FsmErro
     let mut ids: Vec<u64> = events
         .iter()
         .filter_map(|ev| match ev {
-            ExecEvent::OrderCreated { id }
-            | ExecEvent::OrderValidated { id }
-            | ExecEvent::OrderSent { id }
-            | ExecEvent::OrderAcked { id }
+            ExecEvent::OrderCreated { id, .. }
+            | ExecEvent::OrderValidated { id, .. }
+            | ExecEvent::OrderSent { id, .. }
+            | ExecEvent::OrderAcked { id, .. }
             | ExecEvent::OrderFill { id, .. }
-            | ExecEvent::OrderCancelRequested { id }
-            | ExecEvent::OrderCancelled { id }
+            | ExecEvent::OrderCancelRequested { id, .. }
+            | ExecEvent::OrderCancelled { id, .. }
             | ExecEvent::OrderRejected { id, .. }
-            | ExecEvent::OrderExpired { id } => Some(id.0),
+            | ExecEvent::OrderExpired { id, .. } => Some(id.0),
         })
         .collect();
 

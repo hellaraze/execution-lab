@@ -26,25 +26,25 @@ impl OrderStore {
 
     pub fn apply(&mut self, ev: &ExecEvent) -> Result<()> {
         match ev {
-            ExecEvent::OrderCreated { id } => {
+            ExecEvent::OrderCreated { id, .. } => {
                 self.by_id.insert(*id, OrderView::new());
                 self.filled_notional.insert(*id, 0.0);
             }
-            ExecEvent::OrderValidated { id } => {
+            ExecEvent::OrderValidated { id, .. } => {
                 let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
                 v.state = OrderState::Validated;
             }
-            ExecEvent::OrderSent { id } => {
+            ExecEvent::OrderSent { id, .. } => {
                 let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
                 v.state = OrderState::Sent;
             }
-            ExecEvent::OrderAcked { id } => {
+            ExecEvent::OrderAcked { id, .. } => {
                 let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
                 v.state = OrderState::Acknowledged;
             }
 
             // Treat OrderFill as DELTA: (filled_qty += delta_qty), avg_px recomputed from notional.
-            ExecEvent::OrderFill { id, filled_qty, avg_px } => {
+            ExecEvent::OrderFill { id, filled_qty, avg_px, .. } => {
                 if !filled_qty.is_finite() || !avg_px.is_finite() || *filled_qty < 0.0 || *avg_px <= 0.0 {
                     anyhow::bail!("invalid fill numbers: filled_qty={} avg_px={}", filled_qty, avg_px);
                 }
@@ -64,11 +64,11 @@ impl OrderStore {
                 }
             }
 
-            ExecEvent::OrderCancelRequested { id } => {
+            ExecEvent::OrderCancelRequested { id, .. } => {
                 let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
                 v.state = OrderState::CancelRequested;
             }
-            ExecEvent::OrderCancelled { id } => {
+            ExecEvent::OrderCancelled { id, .. } => {
                 let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
                 v.state = OrderState::Cancelled;
             }
@@ -77,7 +77,7 @@ impl OrderStore {
                 let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
                 v.state = OrderState::Rejected;
             }
-            ExecEvent::OrderExpired { id } => {
+            ExecEvent::OrderExpired { id, .. } => {
                 let v = self.by_id.entry(*id).or_insert_with(OrderView::new);
                 v.state = OrderState::Expired;
             }
