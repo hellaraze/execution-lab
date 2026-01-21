@@ -15,3 +15,5 @@ replay = { path = "../replay" }
 exec = { path = "../exec" }
 eventlog = { path = "../eventlog" }
 serde_json = { workspace = true }
+el_core = { path = "../core" }
+uuid = { workspace = true }

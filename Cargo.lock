@@ -19,11 +19,13 @@ dependencies = [
  "adapters",
  "anyhow",
  "connectors",
+ "el_core",
  "eventlog",
  "exec",
  "replay",
  "serde_json",
  "tokio",
+ "uuid",
 ]
 
 [[package]]
