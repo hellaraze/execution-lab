@@ -1,3 +1,5 @@
+pub mod snapshot;
+pub mod hash;
 pub mod envelope;
 pub mod reader;
 pub mod writer;

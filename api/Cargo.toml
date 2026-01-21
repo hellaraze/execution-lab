@@ -9,3 +9,8 @@ repository.workspace = true
 connectors = { path = "../connectors" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 anyhow = "1"
+
+adapters = { path = "../adapters" }
+replay = { path = "../replay" }
+exec = { path = "../exec" }
+eventlog = { path = "../eventlog" }

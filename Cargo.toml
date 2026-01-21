@@ -9,7 +9,7 @@ members = [
   "risk",
   "exec",
   "strategy",
-  "api",
+  "api", "adapters",
   ]
 resolver = "2"
 
