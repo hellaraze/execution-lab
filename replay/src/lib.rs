@@ -26,3 +26,11 @@ impl ReplayGuard {
         self.health = ReplayHealth::Healthy;
     }
 }
+
+impl ReplayGuard {
+    pub fn on_kind(&mut self, kind: &str) {
+        if kind == "snapshot" {
+            self.on_snapshot();
+        }
+    }
+}

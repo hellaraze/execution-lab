@@ -33,3 +33,9 @@ impl SeqTracker {
         }
     }
 }
+
+impl SeqTracker {
+    pub fn reset(&mut self, last_seq: u64) {
+        self.last = Some(last_seq);
+    }
+}
