@@ -22,6 +22,7 @@ dependencies = [
  "eventlog",
  "exec",
  "replay",
+ "serde_json",
  "tokio",
 ]
 
