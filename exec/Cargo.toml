@@ -6,6 +6,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+uuid = { version = "1", features = ["v4"] }
+replay = { path = "../replay" }
 el_core = { path = "../core" }
 eventlog = { path = "../eventlog" }
 serde.workspace = true
@@ -13,3 +15,5 @@ serde_json.workspace = true
 thiserror.workspace = true
 anyhow = "1"
 blake3 = "1.8.3"
+
+[dev-dependencies]
