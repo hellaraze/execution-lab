@@ -16,7 +16,6 @@ pub struct Bridge {
     seen: HashSet<EventId>,
 }
 
-
 impl Bridge {
     pub fn new(writer: EventLogWriter) -> Self {
         Self { writer, seen: HashSet::new() }
@@ -29,8 +28,7 @@ impl Bridge {
         let path = path.as_ref();
 
         // replay existing log to seed seen
-        let mut seen: std::collections::HashSet<el_core::event::EventId> =
-            std::collections::HashSet::new();
+        let mut seen: HashSet<EventId> = HashSet::new();
 
         if path.exists() {
             let mut r = eventlog::EventLogReader::open(path)?;
@@ -42,7 +40,7 @@ impl Bridge {
                 if env.kind != "event" {
                     continue;
                 }
-                let e: el_core::event::Event = serde_json::from_slice(&payload)?;
+                let e: Event = serde_json::from_slice(&payload)?;
                 seen.insert(e.id);
             }
         }
@@ -53,7 +51,7 @@ impl Bridge {
 }
 
 impl ExecOutbox for Bridge {
-        fn publish_once(&mut self, ev: Event) -> Result<()> {
+    fn publish_once(&mut self, ev: Event) -> Result<()> {
         if !self.seen.insert(ev.id) {
             return Ok(());
         }
