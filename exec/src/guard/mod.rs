@@ -8,11 +8,11 @@ impl ReplayGuard {
 }
 
 #[derive(Debug, Default)]
-pub struct Guard {
+pub struct ExecGuard {
     replay: ReplayGuard,
 }
 
-impl Guard {
+impl ExecGuard {
     pub fn new() -> Self {
         Self {
             replay: ReplayGuard::new(),
