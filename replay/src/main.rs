@@ -1,18 +1,19 @@
-use anyhow::Context;
+use anyhow::{Context, Result};
 use blake3::Hasher;
-use el_core::event::{EventPayload, EventType};
-use eventlog::reader::EventLogReader;
+use el_core::event::{Event, EventPayload, EventType};
+use eventlog::EventLogReader;
 use orderbook::OrderBook;
 
 fn hash_book(book: &OrderBook) -> String {
     let mut h = Hasher::new();
 
-    // bids (ascending by key) - deterministic
+    // BTreeMap iteration order is deterministic
     for (p, q) in book.bids.iter() {
         h.update(&p.0.to_le_bytes());
         h.update(&q.to_le_bytes());
     }
-    // asks (ascending) - deterministic
+    h.update(b"|");
+
     for (p, q) in book.asks.iter() {
         h.update(&p.0.to_le_bytes());
         h.update(&q.to_le_bytes());
@@ -21,18 +22,23 @@ fn hash_book(book: &OrderBook) -> String {
     h.finalize().to_hex().to_string()
 }
 
-fn main() -> anyhow::Result<()> {
-    let path = std::env::args().nth(1).unwrap_or_else(|| "events_book.log".to_string());
+fn main() -> Result<()> {
+    let path = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "events_book.log".to_string());
+
     let mut r = EventLogReader::open(&path).with_context(|| format!("open log: {}", path))?;
 
     let mut book = OrderBook::new();
     let mut last_seq: Option<u64> = None;
-
     let mut n: u64 = 0;
 
-    while let Some(ev) = r.next()? {
+    while let Some((env, payload_bytes)) = r.next()? {
         n += 1;
-        last_seq = ev.seq.or(last_seq);
+        last_seq = Some(env.seq);
+
+        let ev: Event = serde_json::from_slice(&payload_bytes)
+            .with_context(|| format!("parse core::Event json (seq={})", env.seq))?;
 
         match (&ev.event_type, &ev.payload) {
             (EventType::BookSnapshot, EventPayload::BookSnapshot { bids, asks }) => {
@@ -45,26 +51,18 @@ fn main() -> anyhow::Result<()> {
             _ => {}
         }
 
-        // every 2000 events, print state
         if n % 2000 == 0 {
             let bid = book.top_bid();
             let ask = book.top_ask();
             let h = hash_book(&book);
-            println!(
-                "n={} seq={:?} bid={:?} ask={:?} hash={}",
-                n, last_seq, bid, ask, h
-            );
+            println!("n={} seq={:?} bid={:?} ask={:?} hash={}", n, last_seq, bid, ask, h);
         }
     }
 
-    // final
     let bid = book.top_bid();
     let ask = book.top_ask();
     let h = hash_book(&book);
-    println!(
-        "FINAL n={} seq={:?} bid={:?} ask={:?} hash={}",
-        n, last_seq, bid, ask, h
-    );
+    println!("FINAL n={} seq={:?} bid={:?} ask={:?} hash={}", n, last_seq, bid, ask, h);
 
     Ok(())
 }
