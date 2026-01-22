@@ -1,14 +1,17 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use el_core::event::Event;
+
+#[derive(Debug, thiserror::Error)]
+pub enum RiskError {
+    #[error("position limit exceeded")]
+    PositionLimit,
+    #[error("notional limit exceeded")]
+    NotionalLimit,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub struct RiskEngine;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+impl RiskEngine {
+    pub fn check(_event: &Event) -> Result<(), RiskError> {
+        Ok(())
     }
 }

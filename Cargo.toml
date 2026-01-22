@@ -10,8 +10,12 @@ members = [
   "risk",
   "exec",
   "strategy",
-  "api", "adapters", "execution-bridge",
-  ]
+  "api",
+  "adapters",
+  "execution-bridge",
+  "observability",
+  "audit",
+]
 resolver = "2"
 
 [workspace.package]
