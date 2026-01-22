@@ -1,5 +1,5 @@
 use anyhow::Result;
-use el_core::event::{ExecEvent, EventId};
+use el_core::event::{Event, EventId};
 use eventlog::EventLogWriter;
 use serde_json;
 
@@ -7,7 +7,7 @@ use serde_json;
 pub struct IdempotencyKey(pub EventId);
 
 pub trait ExecOutbox {
-    fn publish_once(&mut self, ev: ExecEvent) -> Result<()>;
+    fn publish_once(&mut self, ev: Event) -> Result<()>;
 }
 
 pub struct Bridge {
@@ -21,14 +21,14 @@ impl Bridge {
 }
 
 impl ExecOutbox for Bridge {
-    fn publish_once(&mut self, ev: ExecEvent) -> Result<()> {
+    fn publish_once(&mut self, ev: Event) -> Result<()> {
         // ЖБ-контракт:
         // - writer.append MUST be idempotent by EventId
         // - duplicate EventId -> NO-OP
         
         let payload = serde_json::to_vec(&ev)?;
-        let kind = "exec";
-        let ts_ns: u64 = ev.ts_ns();
+        let kind = "event";
+        let ts_ns: u64 = ev.ts_proc.0;
         self.writer.append_bytes(kind, ts_ns, &payload)?;
 
         Ok(())
