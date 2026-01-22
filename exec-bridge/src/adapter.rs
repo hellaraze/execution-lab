@@ -7,15 +7,10 @@ fn oid(s: &str) -> Option<OrderId> {
 }
 
 fn ik(e: &Event) -> exec::util::instrument::InstrumentKey {
-    // best-effort: map by exchange + symbol string
-    // core: exchange enum + symbol string already present on Event
-    let ex = match &e.exchange {
-        el_core::event::Exchange::Binance => exec::util::instrument::Exchange::Binance,
-        el_core::event::Exchange::Okx => exec::util::instrument::Exchange::Okx,
-        el_core::event::Exchange::Bybit => exec::util::instrument::Exchange::Bybit,
-        el_core::event::Exchange::Other(s) => exec::util::instrument::Exchange::Other(s.clone()),
-    };
-    exec::util::instrument::InstrumentKey::new(ex, &e.symbol)
+    exec::util::instrument::InstrumentKey::new(
+        format!("{:?}", e.exchange),
+        e.symbol.clone(),
+    )
 }
 
 pub fn adapt(e: &Event) -> Option<ExecEvent> {
