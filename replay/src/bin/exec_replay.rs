@@ -5,6 +5,7 @@ use eventlog::EventLogReader;
 use exec_bridge::adapter::adapt as adapt_exec;
 use exec::events::ExecEvent as ExecEv;
 use exec::order::snapshot::build_snapshot_multi;
+use exec::order::types::OrderState;
 
 fn main() -> Result<()> {
     let path = std::env::args()
@@ -60,24 +61,28 @@ fn main() -> Result<()> {
         ids.dedup();
 
         let mut n_ack = 0u64;
-        let mut n_fill = 0u64;
+        let mut n_pf = 0u64;
+        let mut n_filled = 0u64;
         let mut n_cancel = 0u64;
         let mut n_reject = 0u64;
 
         for id_u in &ids {
             let id = exec::events::OrderId(*id_u);
             if let Some(v) = store.view(id) {
-                let s = format!("{:?}", v.state);
-                if s == "Acknowledged" { n_ack += 1; }
-                if s == "PartiallyFilled" { n_fill += 1; }
-                if s == "Cancelled" { n_cancel += 1; }
-                if s == "Rejected" { n_reject += 1; }
+                match v.state {
+                    OrderState::Acknowledged => n_ack += 1,
+                    OrderState::PartiallyFilled => n_pf += 1,
+                    OrderState::Filled => n_filled += 1,
+                    OrderState::Cancelled => n_cancel += 1,
+                    OrderState::Rejected => n_reject += 1,
+                    _ => {}
+                }
             }
         }
 
         println!(
-            "INSTR {}:{} orders={} ack={} pf={} cancelled={} rejected={}",
-            ik.exchange, ik.symbol, ids.len(), n_ack, n_fill, n_cancel, n_reject
+            "INSTR {}:{} orders={} ack={} pf={} filled={} cancelled={} rejected={}",
+            ik.exchange, ik.symbol, ids.len(), n_ack, n_pf, n_filled, n_cancel, n_reject
         );
     }
 
