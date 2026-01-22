@@ -6,7 +6,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-el_core = { path = "../el_core" }
+el_core = { path = "../core" }
 el_eventlog = { path = "../eventlog" }
 serde = { version = "1", features = ["derive"] }
 anyhow = "1"
