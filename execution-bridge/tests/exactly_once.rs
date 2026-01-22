@@ -32,7 +32,8 @@ fn exactly_once_append_is_idempotent_by_event_id() {
     let w = EventLogWriter::open_append(&path, "exec", eventlog::writer::Durability::Buffered).unwrap();
     let mut bridge = Bridge::new(w);
 
-    let id = Uuid::new_v4();    let ev = mk_event(id);
+    let id = Uuid::new_v4();
+    let ev = mk_event(id);
     bridge.publish_once(ev.clone()).unwrap();
     bridge.publish_once(ev.clone()).unwrap();
 
@@ -47,7 +48,9 @@ fn exactly_once_append_is_idempotent_by_event_id() {
         };
         if env.kind != "event" { continue; }
 
-        let e: Event = serde_json::from_slice(&payload).unwrap();        if e.id == id { n += 1; }
+        let e: Event = serde_json::from_slice(&payload).unwrap();
+
+        if e.id == ev.id { n += 1; }
     }
 
     assert_eq!(n, 1, "expected exactly-once by EventId, got {n}");
