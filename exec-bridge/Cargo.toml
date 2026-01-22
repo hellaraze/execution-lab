@@ -1,0 +1,8 @@
+[package]
+name = "exec-bridge"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+el-core = { path = "../core" }
+el-exec = { path = "../exec" }

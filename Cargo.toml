@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "exec-bridge",
   "core",
   "connectors",
   "orderbook",
