@@ -44,17 +44,13 @@ fn exactly_once_append_is_idempotent_by_event_id() {
     let mut n = 0usize;
 
     loop {
-        let env = match r.read_next().unwrap() {
+        let (env, payload) = match r.next().unwrap() {
             Some(v) => v,
             None => break,
         };
         if env.kind != "event" { continue; }
 
-        let bytes = base64::engine::general_purpose::STANDARD
-            .decode(env.payload_b64.as_bytes())
-            .unwrap();
-
-        let e: Event = serde_json::from_slice(&bytes).unwrap();
+        let e: Event = serde_json::from_slice(&payload).unwrap();
         if e.id == id { n += 1; }
     }
 
