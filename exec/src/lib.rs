@@ -1,3 +1,7 @@
+pub mod adapter;
+pub mod event;
+pub mod mock_adapter;
+
 pub mod guard;
 pub mod events;
 pub mod io;
