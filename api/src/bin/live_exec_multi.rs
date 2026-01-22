@@ -15,7 +15,7 @@ fn main() -> anyhow::Result<()> {
     let path = "var/live_exec_multi.log";
     let _ = std::fs::remove_file(path);
 
-    let w = EventLogWriter::open(path)?;
+    let mut w = EventLogWriter::open(path)?;
     let btc = InstrumentKey::new("binance", "BTCUSDT");
     let eth = InstrumentKey::new("binance", "ETHUSDT");
 

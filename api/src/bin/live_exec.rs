@@ -17,8 +17,7 @@ fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all("var")?;
     let _ = std::fs::remove_file(path);
 
-    let w = EventLogWriter::open(path)?;
-    let mut outbox = Bridge::new(w);
+    let mut w = EventLogWriter::open(path)?;
 
     let mut seq = SeqTracker::new();
     let mut guard = ReplayGuard::new();
