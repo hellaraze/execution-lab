@@ -2,9 +2,8 @@ use execution_bridge::*;
 use el_core::event::{Event, EventId, EventPayload, EventType, Exchange};
 use el_core::instrument::InstrumentKey;
 use el_core::time::{Timestamp, TimeSource};
-use eventlog::{EventLogWriter, EventLogReader};
+use eventlog::{EventLogReader, EventLogWriter};
 use base64::Engine;
-use serde_json;
 use uuid::Uuid;
 use std::collections::HashMap;
 
@@ -28,7 +27,6 @@ fn mk_event(id: EventId) -> Event {
 
 #[test]
 fn exactly_once_append_is_idempotent_by_event_id() {
-    // file-backed writer to temp file (no mem impl in eventlog)
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("exec_outbox.log");
 
@@ -41,6 +39,21 @@ fn exactly_once_append_is_idempotent_by_event_id() {
     bridge.publish_once(ev.clone()).unwrap();
     bridge.publish_once(ev.clone()).unwrap();
 
-    // NOTE: currently EventLogWriter is NOT idempotent, so this test will FAIL until we implement dedupe.
-    // We'll read envelopes and assert 1 after dedupe is added.
+    // verify persisted log contains exactly 1 event with this id
+    let r = EventLogReader::open(&path).unwrap();
+    let mut n = 0usize;
+
+    for env in r.iter_envelopes() {
+        let env = env.unwrap();
+        if env.kind != "event" { continue; }
+
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(env.payload_b64.as_bytes())
+            .unwrap();
+
+        let e: Event = serde_json::from_slice(&bytes).unwrap();
+        if e.id == id { n += 1; }
+    }
+
+    assert_eq!(n, 1, "expected exactly-once by EventId, got {n}");
 }
