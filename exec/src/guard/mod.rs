@@ -1,26 +1,21 @@
-#[cfg(test)]
-use replay::ReplayGuard;
+#[derive(Debug, Default, Clone)]
+pub struct ReplayGuard;
 
-pub struct ExecGuard {
+impl ReplayGuard {
+    pub fn new() -> Self {
+        Self
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Guard {
     replay: ReplayGuard,
 }
 
-impl ExecGuard {
+impl Guard {
     pub fn new() -> Self {
         Self {
             replay: ReplayGuard::new(),
         }
-    }
-
-    pub fn allow_exec(&self) -> bool {
-        self.replay.allow_event()
-    }
-
-    pub fn on_need_snapshot(&mut self) {
-        self.replay.on_adapter_signal();
-    }
-
-    pub fn on_snapshot(&mut self) {
-        self.replay.on_snapshot();
     }
 }
