@@ -16,7 +16,7 @@ serde_json.workspace = true
 thiserror.workspace = true
 time.workspace = true
 
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1", features = ["signal", "macros", "rt-multi-thread"] }
 tokio-tungstenite = { version = "0.21", features = ["rustls-tls-webpki-roots"] }
 futures-util = "0.3"
 url = "2"
