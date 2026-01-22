@@ -1,6 +1,8 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use adapters::{SeqTracker, AdapterSignal};
+use execution_bridge::Bridge;
+use execution_bridge::Bridge;
 use eventlog::EventLogWriter;
 use exec::events::{ExecEvent, OrderId};
 use exec::order::snapshot::build_snapshot;
@@ -17,7 +19,8 @@ fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all("var")?;
     let _ = std::fs::remove_file(path);
 
-    let mut w = EventLogWriter::open(path)?;
+    let w = EventLogWriter::open(path)?;
+    let mut outbox = Bridge::new(w);
 
     let mut seq = SeqTracker::new();
     let mut guard = ReplayGuard::new();
@@ -30,7 +33,7 @@ fn main() -> anyhow::Result<()> {
     seq.observe(1).unwrap();
     if guard.allow_event() {
         let ev = ExecEvent::OrderCreated { instrument: instrument.clone(), id: OrderId(1) };
-        w.append_bytes("event", now_ns(), &serde_json::to_vec(&ev)?)?;
+        outbox.publish_once(ev.clone())?;
         live_events.push(ev);
     }
 
@@ -48,7 +51,7 @@ fn main() -> anyhow::Result<()> {
     seq.observe(11).unwrap();
     if guard.allow_event() {
         let ev = ExecEvent::OrderAcked { instrument: instrument.clone(), id: OrderId(1) };
-        w.append_bytes("event", now_ns(), &serde_json::to_vec(&ev)?)?;
+        outbox.publish_once(ev.clone())?;
         live_events.push(ev);
     }
 

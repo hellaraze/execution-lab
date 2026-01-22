@@ -10,6 +10,8 @@ use exec::order::bridge::to_exec_event;
 use exec::order::snapshot::build_snapshot;
 use exec::events::ExecEvent;
 
+use execution_bridge::Bridge;
+use execution_bridge::Bridge;
 use eventlog::EventLogWriter;
 
 fn now_ns_i64() -> i64 {
@@ -46,7 +48,8 @@ fn main() -> anyhow::Result<()> {
     std::fs::create_dir_all("var")?;
     let _ = std::fs::remove_file(path);
 
-    let mut w = EventLogWriter::open(path)?;
+    let w = EventLogWriter::open(path)?;
+    let mut outbox = Bridge::new(w);
 
     let order_id = "ORD-1".to_string();
 
@@ -92,7 +95,7 @@ fn main() -> anyhow::Result<()> {
     let mut exec_events: Vec<ExecEvent> = Vec::new();
     for ev in &core_events {
         if let Some(x) = to_exec_event(ev)? {
-            w.append_bytes("event", now_ns_u64(), &serde_json::to_vec(&x)?)?;
+            outbox.publish_once(x.clone())?;
             exec_events.push(x);
         }
     }
