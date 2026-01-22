@@ -1,7 +1,7 @@
 use execution_bridge::*;
 use el_core::event::{Event, EventId, EventPayload, EventType, Exchange};
 use el_core::instrument::InstrumentKey;
-use el_core::time::Timestamp;
+use el_core::time::{Timestamp, TimeSource};
 use eventlog::EventLogWriter;
 use uuid::Uuid;
 use std::collections::HashMap;
@@ -14,8 +14,8 @@ fn mk_event(id: EventId) -> Event {
         symbol: "BTCUSDT".to_string(),
         instrument: InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
         ts_exchange: None,
-        ts_recv: Timestamp(1),
-        ts_proc: Timestamp(2),
+        ts_recv: Timestamp::new(1, TimeSource::Receive),
+        ts_proc: Timestamp::new(2, TimeSource::Process),
         seq: None,
         schema_version: 1,
         integrity_flags: vec![],
@@ -30,7 +30,7 @@ fn exactly_once_append_is_idempotent_by_event_id() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("exec_outbox.log");
 
-    let mut w = EventLogWriter::open_append(&path, "exec", eventlog::writer::Durability::Buffered).unwrap();
+    let w = EventLogWriter::open_append(&path, "exec", eventlog::writer::Durability::Buffered).unwrap();
     let mut bridge = Bridge::new(w);
 
     let id = Uuid::new_v4();
