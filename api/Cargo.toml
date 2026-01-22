@@ -18,3 +18,4 @@ eventlog = { path = "../eventlog" }
 serde_json = { workspace = true }
 el_core = { path = "../core" }
 uuid = { workspace = true }
+observability = { path = "../observability" }
