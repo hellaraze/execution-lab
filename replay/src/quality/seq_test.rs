@@ -10,6 +10,7 @@ mod tests {
         Event {
             id: Uuid::new_v4(),
             event_type: EventType::BookDelta,
+            instrument: el_core::instrument::InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
             exchange: Exchange::Binance,
             symbol: "BTCUSDT".to_string(),
             ts_exchange: None,

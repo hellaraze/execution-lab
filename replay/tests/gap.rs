@@ -16,6 +16,7 @@ fn mk_delta(i: u64) -> Event {
     Event {
         id: uuid::Uuid::new_v4(),
         event_type: EventType::BookDelta,
+        instrument: el_core::instrument::InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
         exchange: Exchange::Binance,
         symbol: "BTCUSDT".to_string(),
         ts_exchange: None,
@@ -34,7 +35,7 @@ fn mk_delta(i: u64) -> Event {
 
 #[test]
 fn gap_is_detected_and_fails_fast() -> Result<()> {
-    let mut dir = PathBuf::from("target/tmp");
+    let mut dir = PathBuf::from("replay/target/tmp");
     fs::create_dir_all(&dir)?;
     dir.push("gap_test.log");
 
@@ -52,8 +53,9 @@ fn gap_is_detected_and_fails_fast() -> Result<()> {
     let mut lines: Vec<&str> = s.lines().collect();
     // remove line 40 (1-indexed) => gap
     lines.remove(39);
-
-    let corrupted = lines.join("\n") + "\n";
+    let corrupted = lines.join("
+") + "
+";
     fs::write(&dir, corrupted)?;
 
     // 3) run replay: must fail with GAP
