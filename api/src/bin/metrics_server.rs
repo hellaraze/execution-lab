@@ -4,10 +4,13 @@ use tower_http::trace::TraceLayer;
 
 async fn metrics() -> impl IntoResponse {
     let _ = observability::init_prometheus();
-    observability::inc_metrics_scrapes();
     let Some(h) = observability::handle() else {
         return (StatusCode::INTERNAL_SERVER_ERROR, String::new());
     };
+
+    // increment after recorder is definitely installed
+    observability::inc_metrics_scrapes();
+
     (StatusCode::OK, h.render())
 }
 
@@ -17,6 +20,7 @@ async fn healthz() -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // install recorder on boot as well
     let _ = observability::init_prometheus();
 
     let app = Router::new()
