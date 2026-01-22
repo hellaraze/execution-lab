@@ -8,9 +8,7 @@ fn no_direct_core_event_writes() {
         "replay/src/bin/",
         "replay/tests/",
         "execution-bridge/tests/",
-        "tests/",
-        "examples/",
-    ];
+                    ];
 
     let patterns = [
         "EventLogWriter::open(",
