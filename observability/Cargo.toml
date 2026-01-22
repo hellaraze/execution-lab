@@ -11,3 +11,4 @@ metrics = "0.22"
 metrics-exporter-prometheus = "0.13"
 tracing = "0.1"
 tracing-subscriber = "0.3"
+thiserror.workspace = true
