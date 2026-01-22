@@ -2,20 +2,22 @@ use std::process::Command;
 
 #[test]
 fn no_direct_core_event_writes() {
-    // Разрешённые пути (tooling / eventlog internals / tests)
+    // allow tooling + tests
     let allow = [
         "eventlog/",
         "replay/src/bin/",
+        "replay/tests/",
+        "execution-bridge/tests/",
         "tests/",
         "examples/",
     ];
 
-    // Ищем прямые записи core::Event в eventlog
     let patterns = [
         "EventLogWriter::open(",
         "writer.write(&ev)",
         "append_bytes(\"event\"",
         "append_json_value(\"event\"",
+        "EventLogWriter::open_append(",
     ];
 
     let out = Command::new("rg")
@@ -37,7 +39,7 @@ fn no_direct_core_event_writes() {
 
     if !violations.is_empty() {
         panic!(
-            "Direct core::Event writes are forbidden in runtime:\n{}",
+            "Direct EventLogWriter usage is forbidden in runtime (must use execution-bridge outbox):\n{}",
             violations.join("\n")
         );
     }
