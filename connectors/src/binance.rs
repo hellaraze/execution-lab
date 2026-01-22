@@ -83,6 +83,7 @@ fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, la
     };
 
     writer.write(&ev)?;
+    writer.flush()?;
     Ok(())
 }
 
@@ -104,6 +105,7 @@ fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, curre
         meta: HashMap::new(),
     };
     writer.write(&ev)?;
+    writer.flush()?;
     Ok(())
 }
 
@@ -125,6 +127,7 @@ fn emit_resync_started(writer: &mut EventLogWriter, symbol: &str, current_u: u64
         meta: HashMap::new(),
     };
     writer.write(&ev)?;
+    writer.flush()?;
     Ok(())
 }
 
@@ -153,8 +156,17 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
     let mut in_sync = false;
     let mut last_checkpoint_ns: i64 = now_nanos();
 
-    while let Some(msg) = read.next().await {
-        let msg = msg?;
+    loop {
+        tokio::select! {
+            _ = tokio::signal::ctrl_c() => {
+                eprintln!("CTRL-C: stopping binance_depth");
+                break;
+            }
+            msg_res = read.next() => {
+                let Some(msg_res) = msg_res else { break; };
+                let msg: tokio_tungstenite::tungstenite::Message = msg_res?;
+
+        let msg: tokio_tungstenite::tungstenite::Message = msg;
         if !msg.is_text() { continue; }
 
         let d: DepthDiff = serde_json::from_str(msg.to_text()?)?;
@@ -164,6 +176,25 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
         if !in_sync {
             if d.first_update_id <= last_u + 1 && last_u + 1 <= d.final_update_id {
                 in_sync = true;
+            } else if d.first_update_id > last_u + 1 {
+                // Snapshot too old vs WS. Re-snapshot, emit snapshot, stay out-of-sync.
+                let snap = fetch_snapshot(symbol, 1000).await?;
+                book = OrderBook::new();
+                let bids = snap
+                    .bids
+                    .into_iter()
+                    .map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0)))
+                    .collect::<Vec<_>>();
+                let asks = snap
+                    .asks
+                    .into_iter()
+                    .map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0)))
+                    .collect::<Vec<_>>();
+                book.apply_levels(&bids, &asks);
+                last_u = snap.last_update_id;
+
+                emit_snapshot(&mut writer, &symbol.to_uppercase(), &book, last_u)?;
+                continue;
             } else {
                 // still not aligned; skip until aligned
                 continue;
@@ -222,7 +253,11 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
             emit_snapshot(&mut writer, &symbol.to_uppercase(), &book, last_u)?;
             last_checkpoint_ns = now;
         }
+    
+            }
+        }
     }
 
+    writer.flush()?;
     Ok(())
 }
