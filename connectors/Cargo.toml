@@ -6,6 +6,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+execution-bridge = { path = "../execution-bridge" }
+
 el_core = { path = "../core" }
 eventlog = { path = "../eventlog" }
 orderbook = { path = "../orderbook" }

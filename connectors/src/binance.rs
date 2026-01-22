@@ -83,7 +83,7 @@ fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, la
     };
 
     writer.write(&ev)?;
-    writer.flush()?;
+    
     Ok(())
 }
 
@@ -105,7 +105,7 @@ fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, curre
         meta: HashMap::new(),
     };
     writer.write(&ev)?;
-    writer.flush()?;
+    
     Ok(())
 }
 
@@ -127,7 +127,7 @@ fn emit_resync_started(writer: &mut EventLogWriter, symbol: &str, current_u: u64
         meta: HashMap::new(),
     };
     writer.write(&ev)?;
-    writer.flush()?;
+    
     Ok(())
 }
 
@@ -141,7 +141,7 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
 
     let mut last_u = snap.last_update_id;
 
-    let mut writer = EventLogWriter::open(log_path)?;
+    let mut outbox = Bridge::open_dedup(log_path, "binance", eventlog::writer::Durability::FsyncEvery { n: 1 })?;
     emit_snapshot(&mut writer, &symbol.to_uppercase(), &book, last_u)?;
 
     // 2) diff stream
@@ -258,6 +258,6 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
         }
     }
 
-    writer.flush()?;
+    
     Ok(())
 }
