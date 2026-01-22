@@ -40,11 +40,14 @@ fn exactly_once_append_is_idempotent_by_event_id() {
     bridge.publish_once(ev.clone()).unwrap();
 
     // verify persisted log contains exactly 1 event with this id
-    let r = EventLogReader::open(&path).unwrap();
+    let mut r = EventLogReader::open(&path).unwrap();
     let mut n = 0usize;
 
-    for env in r.iter_envelopes() {
-        let env = env.unwrap();
+    loop {
+        let env = match r.read_next().unwrap() {
+            Some(v) => v,
+            None => break,
+        };
         if env.kind != "event" { continue; }
 
         let bytes = base64::engine::general_purpose::STANDARD
