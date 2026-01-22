@@ -92,7 +92,7 @@ fn main() -> anyhow::Result<()> {
     let mut exec_events: Vec<ExecEvent> = Vec::new();
     for ev in &core_events {
         if let Some(x) = to_exec_event(ev)? {
-            outbox.publish_once(x.clone())?;
+            w.append_bytes("event", now_ns_u64(), &serde_json::to_vec(&x)?)?;
             exec_events.push(x);
         }
     }
