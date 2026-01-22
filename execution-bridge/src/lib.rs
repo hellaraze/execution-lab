@@ -1,6 +1,7 @@
 use anyhow::Result;
 use el_core::event::{ExecEvent, EventId};
 use eventlog::EventLogWriter;
+use serde_json;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct IdempotencyKey(pub EventId);
@@ -24,7 +25,12 @@ impl ExecOutbox for Bridge {
         // ЖБ-контракт:
         // - writer.append MUST be idempotent by EventId
         // - duplicate EventId -> NO-OP
-        self.writer.append(ev)?;
+        
+        let payload = serde_json::to_vec(&ev)?;
+        let kind = "exec";
+        let ts_ns: u64 = ev.ts_ns();
+        self.writer.append_bytes(kind, ts_ns, &payload)?;
+
         Ok(())
     }
 }
