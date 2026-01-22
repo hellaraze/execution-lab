@@ -18,6 +18,29 @@ fn main() -> Result<()> {
 
     let mut w = EventLogWriter::open_append(&out_path, "exec", Durability::Buffered)?;
 
+    // OrderSubmit (id=42)
+    let submit = Event {
+        id: Uuid::new_v4(),
+        event_type: EventType::OrderSubmit,
+        exchange: Exchange::Binance,
+        symbol: "BTCUSDT".to_string(),
+        instrument: InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
+        ts_exchange: None,
+        ts_recv: ts(5),
+        ts_proc: ts(5),
+        seq: Some(5),
+        schema_version: 1,
+        integrity_flags: vec![],
+        payload: EventPayload::OrderSubmit {
+            order_id: "42".to_string(),
+            side: "BUY".to_string(),
+            price: 123.0,
+            qty: 0.5,
+        },
+        meta: HashMap::new(),
+    };
+    w.write(&submit)?;
+
     // OrderAck (id=42)
     let ack = Event {
         id: Uuid::new_v4(),
@@ -58,6 +81,24 @@ fn main() -> Result<()> {
         meta: HashMap::new(),
     };
     w.write(&fill)?;
+
+    // CancelRequest (id=42)
+    let cancel_req = Event {
+        id: Uuid::new_v4(),
+        event_type: EventType::CancelRequest,
+        exchange: Exchange::Binance,
+        symbol: "BTCUSDT".to_string(),
+        instrument: InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
+        ts_exchange: None,
+        ts_recv: ts(4),
+        ts_proc: ts(4),
+        seq: Some(4),
+        schema_version: 1,
+        integrity_flags: vec![],
+        payload: EventPayload::CancelRequest { order_id: "42".to_string() },
+        meta: HashMap::new(),
+    };
+    w.write(&cancel_req)?;
 
     // CancelAck (id=42)
     let cancel = Event {
