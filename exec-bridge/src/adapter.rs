@@ -17,7 +17,10 @@ pub fn adapt(e: &Event) -> Option<ExecEvent> {
     let instrument = ik(e);
 
     match (&e.event_type, &e.payload) {
-        (EventType::OrderSubmit, EventPayload::OrderSubmit { .. }) => None,
+        (EventType::OrderSubmit, EventPayload::OrderSubmit { order_id, .. }) => {
+            let id = oid(order_id)?;
+            Some(ExecEvent::OrderCreated { instrument, id })
+        }
 
         (EventType::OrderAck, EventPayload::OrderAck { order_id }) => {
             Some(ExecEvent::OrderAcked { instrument, id: oid(order_id)? })
@@ -35,7 +38,9 @@ pub fn adapt(e: &Event) -> Option<ExecEvent> {
             Some(ExecEvent::OrderCancelled { instrument, id: oid(order_id)? })
         }
 
-        (EventType::CancelRequest, EventPayload::CancelRequest { .. }) => None,
+        (EventType::CancelRequest, EventPayload::CancelRequest { order_id }) => {
+            Some(ExecEvent::OrderCancelRequested { instrument, id: oid(order_id)? })
+        }
 
         _ => None,
     }

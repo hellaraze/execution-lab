@@ -75,3 +75,39 @@ fn rejects_non_u64_order_id() {
 
     assert!(adapt(&e).is_none());
 }
+
+#[test]
+fn maps_submit_to_order_created() {
+    let e = mk_event(
+        EventType::OrderSubmit,
+        EventPayload::OrderSubmit { order_id: "1".to_string(), side: "BUY".to_string(), price: 1.0, qty: 1.0 },
+    );
+
+    let out = adapt(&e).expect("must map");
+    match out {
+        exec::events::ExecEvent::OrderCreated { instrument, id } => {
+            assert_eq!(instrument.exchange, "Binance");
+            assert_eq!(instrument.symbol, "BTCUSDT");
+            assert_eq!(id.0, 1);
+        }
+        other => panic!("unexpected: {:?}", other),
+    }
+}
+
+#[test]
+fn maps_cancel_request_to_order_cancel_requested() {
+    let e = mk_event(
+        EventType::CancelRequest,
+        EventPayload::CancelRequest { order_id: "2".to_string() },
+    );
+
+    let out = adapt(&e).expect("must map");
+    match out {
+        exec::events::ExecEvent::OrderCancelRequested { instrument, id } => {
+            assert_eq!(instrument.exchange, "Binance");
+            assert_eq!(instrument.symbol, "BTCUSDT");
+            assert_eq!(id.0, 2);
+        }
+        other => panic!("unexpected: {:?}", other),
+    }
+}
