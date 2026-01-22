@@ -2,7 +2,6 @@ use execution_bridge::{Bridge, ExecOutbox};
 use el_core::event::{Event, EventPayload, EventType, Exchange};
 use el_core::time::{Timestamp, TimeSource};
 use el_core::instrument::InstrumentKey;
-use eventlog::writer::EventLogWriter;
 use futures_util::StreamExt;
 use orderbook::OrderBook;
 use serde::Deserialize;
