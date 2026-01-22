@@ -5,7 +5,7 @@ use el_core::instrument::InstrumentKey as CoreIK;
 use el_core::time::{Timestamp, TimeSource};
 
 fn mk_event(event_type: EventType, payload: EventPayload) -> Event {
-    let ts = Timestamp::now(TimeSource::System);
+    let ts = Timestamp::new(0, TimeSource::Exchange);
     Event {
         id: uuid::Uuid::new_v4(),
         event_type,
