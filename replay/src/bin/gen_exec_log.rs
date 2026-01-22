@@ -16,6 +16,8 @@ fn main() -> Result<()> {
         .nth(1)
         .unwrap_or_else(|| "replay/tests/data/exec_events.log".to_string());
 
+    let _ = std::fs::remove_file(&out_path);
+
     let mut w = EventLogWriter::open_append(&out_path, "exec", Durability::Buffered)?;
 
     // OrderSubmit (id=42)
