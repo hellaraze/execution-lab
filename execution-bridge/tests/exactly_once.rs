@@ -34,7 +34,9 @@ fn exactly_once_append_is_idempotent_by_event_id() {
     let mut bridge = Bridge::new(w);
 
     let id = Uuid::new_v4();
+    eprintln!("TEST id={}", id);
     let ev = mk_event(id);
+    eprintln!("EV id={}", ev.id);
 
     bridge.publish_once(ev.clone()).unwrap();
     bridge.publish_once(ev.clone()).unwrap();
@@ -51,6 +53,7 @@ fn exactly_once_append_is_idempotent_by_event_id() {
         if env.kind != "event" { continue; }
 
         let e: Event = serde_json::from_slice(&payload).unwrap();
+        eprintln!("READ kind={} id={}", env.kind, e.id);
         if e.id == id { n += 1; }
     }
 
