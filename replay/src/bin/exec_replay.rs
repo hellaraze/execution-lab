@@ -41,7 +41,23 @@ fn main() -> Result<()> {
     );
 
     for (ik, store) in &stores {
+        let mut seen_ack = 0u64;
+        let mut seen_fill = 0u64;
+        let mut seen_cancel_req = 0u64;
+        let mut seen_cancelled = 0u64;
+        let mut seen_rejected = 0u64;
         // cheap summary: count ids by scanning events for this instrument
+        for ev in exec_events.iter().filter(|e| e.instrument() == ik) {
+            match ev {
+                ExecEv::OrderAcked { .. } => seen_ack += 1,
+                ExecEv::OrderFill { .. } => seen_fill += 1,
+                ExecEv::OrderCancelRequested { .. } => seen_cancel_req += 1,
+                ExecEv::OrderCancelled { .. } => seen_cancelled += 1,
+                ExecEv::OrderRejected { .. } => seen_rejected += 1,
+                _ => {}
+            }
+        }
+
         let mut ids: Vec<u64> = exec_events
             .iter()
             .filter(|e| e.instrument() == ik)
@@ -81,8 +97,8 @@ fn main() -> Result<()> {
         }
 
         println!(
-            "INSTR {}:{} orders={} ack={} pf={} filled={} cancelled={} rejected={}",
-            ik.exchange, ik.symbol, ids.len(), n_ack, n_pf, n_filled, n_cancel, n_reject
+            "INSTR {}:{} orders={} final_ack={} final_pf={} final_filled={} final_cancelled={} final_rejected={} | seen_ack={} seen_fill={} seen_cancel_req={} seen_cancelled={} seen_rejected={}",
+            ik.exchange, ik.symbol, ids.len(), n_ack, n_pf, n_filled, n_cancel, n_reject, seen_ack, seen_fill, seen_cancel_req, seen_cancelled, seen_rejected
         );
     }
 
