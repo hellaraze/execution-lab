@@ -10,8 +10,6 @@ use exec::order::bridge::to_exec_event;
 use exec::order::snapshot::build_snapshot;
 use exec::events::ExecEvent;
 
-use execution_bridge::Bridge;
-use execution_bridge::ExecOutbox;
 use eventlog::EventLogWriter;
 
 fn now_ns_i64() -> i64 {

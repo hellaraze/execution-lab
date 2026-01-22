@@ -1,8 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use adapters::{SeqTracker, AdapterSignal};
-use execution_bridge::Bridge;
-use execution_bridge::ExecOutbox;
 use eventlog::EventLogWriter;
 use exec::events::{ExecEvent, OrderId};
 use exec::order::snapshot::build_snapshot;
