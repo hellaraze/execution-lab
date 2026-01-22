@@ -16,14 +16,11 @@ pub struct Bridge {
     seen: HashSet<EventId>,
 }
 
+
 impl Bridge {
     pub fn new(writer: EventLogWriter) -> Self {
         Self { writer, seen: HashSet::new() }
     }
-}
-
-
-impl Bridge {
     pub fn open_dedup(
         path: impl AsRef<std::path::Path>,
         stream: &str,
