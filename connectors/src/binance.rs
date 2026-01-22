@@ -83,7 +83,7 @@ fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, la
         meta: HashMap::new(),
     };
 
-    &mut writer.write(&ev)?;
+    writer.write(&ev)?;
     
     Ok(())
 }
@@ -105,7 +105,7 @@ fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, curre
         payload: EventPayload::GapDetected { from, to },
         meta: HashMap::new(),
     };
-    &mut writer.write(&ev)?;
+    writer.write(&ev)?;
     
     Ok(())
 }
@@ -127,7 +127,7 @@ fn emit_resync_started(writer: &mut EventLogWriter, symbol: &str, current_u: u64
         payload: EventPayload::ResyncStarted,
         meta: HashMap::new(),
     };
-    &mut writer.write(&ev)?;
+    writer.write(&ev)?;
     
     Ok(())
 }
