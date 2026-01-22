@@ -48,6 +48,11 @@ fn main() -> Result<()> {
             (EventType::BookDelta, EventPayload::BookDelta { bids, asks }) => {
                 book.apply_levels(bids, asks);
             }
+            (EventType::TickerBbo, EventPayload::TickerBbo { bid, ask }) => {
+                // materialize 1-level book from BBO stream
+                book = OrderBook::new();
+                book.apply_levels(&vec![(*bid, 1.0)], &vec![(*ask, 1.0)]);
+            }
             _ => {}
         }
 
