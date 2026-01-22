@@ -30,14 +30,14 @@ fn main() -> Result<()> {
     let mut r = EventLogReader::open(&path).with_context(|| format!("open log: {}", path))?;
 
     let mut book = OrderBook::new();
+    let mut last_seq: Option<u64> = None;
+    let mut n: u64 = 0;
+
     let mut seen_snapshot = false;
     let mut n_delta_before_snapshot: u64 = 0;
     let mut n_snapshot: u64 = 0;
     let mut n_delta: u64 = 0;
     let mut n_bbo: u64 = 0;
-
-    let mut last_seq: Option<u64> = None;
-    let mut n: u64 = 0;
 
     while let Some((env, payload_bytes)) = r.next()? {
         n += 1;
@@ -57,26 +57,16 @@ fn main() -> Result<()> {
                 n_delta += 1;
                 if !seen_snapshot {
                     n_delta_before_snapshot += 1;
-                    // TOP-1 mode: do not apply deltas without a snapshot baseline
                 } else {
                     book.apply_levels(bids, asks);
                 }
             }
             (EventType::TickerBbo, EventPayload::TickerBbo { bid, ask }) => {
                 n_bbo += 1;
-                // 1-level book materialization for BBO streams
+                let bids = vec![(*bid, 1.0)];
+                let asks = vec![(*ask, 1.0)];
                 book = OrderBook::new();
-                book.apply_levels(&vec![(*bid, 1.0)], &vec![(*ask, 1.0)]);
-            }
-            _ => {}
-        }
-            (EventType::BookDelta, EventPayload::BookDelta { bids, asks }) => {
-                book.apply_levels(bids, asks);
-            }
-            (EventType::TickerBbo, EventPayload::TickerBbo { bid, ask }) => {
-                // materialize 1-level book from BBO stream
-                book = OrderBook::new();
-                book.apply_levels(&vec![(*bid, 1.0)], &vec![(*ask, 1.0)]);
+                book.apply_levels(&bids, &asks);
             }
             _ => {}
         }
@@ -85,18 +75,39 @@ fn main() -> Result<()> {
             let bid = book.top_bid();
             let ask = book.top_ask();
             let h = hash_book(&book);
-            println!("n={} seq={:?} bid={:?} ask={:?} hash={}", n, last_seq, bid, ask, h);
+            println!(
+                "n={} seq={:?} bid={:?} ask={:?} hash={} | snap={} delta={} bbo={} delta_ignored={}",
+                n,
+                last_seq,
+                bid,
+                ask,
+                h,
+                n_snapshot,
+                n_delta,
+                n_bbo,
+                n_delta_before_snapshot
+            );
         }
+    }
+
+    if n_delta_before_snapshot > 0 {
+        eprintln!("WARN: ignored deltas before first snapshot: {}", n_delta_before_snapshot);
     }
 
     let bid = book.top_bid();
     let ask = book.top_ask();
     let h = hash_book(&book);
-    if n_delta_before_snapshot > 0 {
-        eprintln!("WARN: ignored deltas before first snapshot: {}", n_delta_before_snapshot);
-    }
-    println!("FINAL n={} seq={:?} bid={:?} ask={:?} hash={} | snap={} delta={} bbo={} delta_ignored={}",
-        n, last_seq, bid, ask, h, n_snapshot, n_delta, n_bbo, n_delta_before_snapshot
+    println!(
+        "FINAL n={} seq={:?} bid={:?} ask={:?} hash={} | snap={} delta={} bbo={} delta_ignored={}",
+        n,
+        last_seq,
+        bid,
+        ask,
+        h,
+        n_snapshot,
+        n_delta,
+        n_bbo,
+        n_delta_before_snapshot
     );
 
     Ok(())
