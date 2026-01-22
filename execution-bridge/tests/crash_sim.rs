@@ -8,7 +8,7 @@ fn mk_event(id: Uuid) -> Event {
         id,
         event_type: el_core::event::EventType::Connectivity,
         exchange: el_core::event::Exchange::Binance,
-        symbol: "TEST",
+        symbol: "TEST".to_string(),
         instrument: el_core::instrument::InstrumentKey::new(
             el_core::event::Exchange::Binance,
             "TEST"
