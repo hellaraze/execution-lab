@@ -6,6 +6,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+exec-bridge = { path = "../exec-bridge" }
 uuid = { version = "1", features = ["v4"] }
 el_core = { path = "../core" }
 eventlog = { path = "../eventlog" }
