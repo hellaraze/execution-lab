@@ -63,77 +63,10 @@ async fn fetch_snapshot(symbol: &str, limit: u32) -> anyhow::Result<DepthSnapsho
 }
 
 #[allow(dead_code)]
-fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, last_u: u64) -> anyhow::Result<()> {
-    let now = now_nanos();
-    let bids: Vec<(f64, f64)> = book.bids.iter().map(|(p,q)| (p.0, *q)).collect();
-    let asks: Vec<(f64, f64)> = book.asks.iter().map(|(p,q)| (p.0, *q)).collect();
-
-    let ev = Event {
-        id: Uuid::new_v4(),
-        event_type: EventType::BookSnapshot,
-        exchange: Exchange::Binance,
-        symbol: symbol.to_string(),
-        instrument: InstrumentKey::new(Exchange::Binance, symbol.to_string()),
-        ts_exchange: None,
-        ts_recv: ts(now, TimeSource::Receive),
-        ts_proc: ts(now, TimeSource::Process),
-        seq: Some(last_u),
-        schema_version: 1,
-        integrity_flags: vec![],
-        payload: EventPayload::BookSnapshot { bids, asks },
-        meta: HashMap::new(),
-    };
-
-    writer.write(&ev)?;
-    
-    Ok(())
-}
 
 #[allow(dead_code)]
-fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, current_u: u64) -> anyhow::Result<()> {
-    let now = now_nanos();
-    let ev = Event {
-        id: Uuid::new_v4(),
-        event_type: EventType::GapDetected,
-        exchange: Exchange::Binance,
-        symbol: symbol.to_string(),
-        instrument: InstrumentKey::new(Exchange::Binance, symbol.to_string()),
-        ts_exchange: None,
-        ts_recv: ts(now, TimeSource::Receive),
-        ts_proc: ts(now, TimeSource::Process),
-        seq: Some(current_u),
-        schema_version: 1,
-        integrity_flags: vec!["depth_gap".to_string()],
-        payload: EventPayload::GapDetected { from, to },
-        meta: HashMap::new(),
-    };
-    writer.write(&ev)?;
-    
-    Ok(())
-}
 
 #[allow(dead_code)]
-fn emit_resync_started(writer: &mut EventLogWriter, symbol: &str, current_u: u64) -> anyhow::Result<()> {
-    let now = now_nanos();
-    let ev = Event {
-        id: Uuid::new_v4(),
-        event_type: EventType::ResyncStarted,
-        exchange: Exchange::Binance,
-        symbol: symbol.to_string(),
-        instrument: InstrumentKey::new(Exchange::Binance, symbol.to_string()),
-        ts_exchange: None,
-        ts_recv: ts(now, TimeSource::Receive),
-        ts_proc: ts(now, TimeSource::Process),
-        seq: Some(current_u),
-        schema_version: 1,
-        integrity_flags: vec!["need_snapshot".to_string()],
-        payload: EventPayload::ResyncStarted,
-        meta: HashMap::new(),
-    };
-    writer.write(&ev)?;
-    
-    Ok(())
-}
 
 
 
