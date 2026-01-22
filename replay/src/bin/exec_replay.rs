@@ -5,6 +5,7 @@ use eventlog::EventLogReader;
 use exec_bridge::adapter::adapt as adapt_exec;
 use exec::events::ExecEvent as ExecEv;
 use exec::order::snapshot::build_snapshot_multi;
+use exec::guard::ExecGuard;
 use exec::order::types::OrderState;
 
 fn main() -> Result<()> {
@@ -15,14 +16,17 @@ fn main() -> Result<()> {
     let mut r = EventLogReader::open(&path).with_context(|| format!("open log: {}", path))?;
 
     let mut exec_events: Vec<ExecEv> = Vec::new();
+    let mut guard = ExecGuard::new();
     let mut n_total: u64 = 0;
 
     while let Some((env, payload_bytes)) = r.next()? {
         n_total += 1;
         let ev: Event = serde_json::from_slice(&payload_bytes)
             .with_context(|| format!("parse core::Event json (seq={})", env.seq))?;
-        if let Some(x) = adapt_exec(&ev) {
-            exec_events.push(x);
+        if guard.allow_exec() {
+            if let Some(x) = adapt_exec(&ev) {
+                exec_events.push(x);
+            }
         }
     }
 
