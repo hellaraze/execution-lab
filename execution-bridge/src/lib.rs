@@ -28,7 +28,7 @@ impl ExecOutbox for Bridge {
         
         let payload = serde_json::to_vec(&ev)?;
         let kind = "event";
-        let ts_ns: u64 = ev.ts_proc.0;
+        let ts_ns: u64 = ev.ts_proc.nanos.try_into()?;
         self.writer.append_bytes(kind, ts_ns, &payload)?;
 
         Ok(())
