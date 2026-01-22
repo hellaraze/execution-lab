@@ -2,7 +2,9 @@ use execution_bridge::*;
 use el_core::event::{Event, EventId, EventPayload, EventType, Exchange};
 use el_core::instrument::InstrumentKey;
 use el_core::time::{Timestamp, TimeSource};
-use eventlog::EventLogWriter;
+use eventlog::{EventLogWriter, EventLogReader};
+use base64::Engine;
+use serde_json;
 use uuid::Uuid;
 use std::collections::HashMap;
 
