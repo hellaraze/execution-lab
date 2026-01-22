@@ -27,7 +27,8 @@ fn main() -> anyhow::Result<()> {
     }
 
     let expected = snapshot_hash.ok_or_else(|| anyhow::anyhow!("snapshot_hash missing"))?;
-    let (_stores, replay_hash) = build_snapshot_multi(&events).map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    let (_stores, replay_hash) =
+        build_snapshot_multi(&events).map_err(|e| anyhow::anyhow!(e.to_string()))?;
 
     if expected != replay_hash {
         panic!(

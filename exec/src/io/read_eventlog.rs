@@ -15,8 +15,12 @@ pub fn read_exec_events_from_eventlog(path: impl AsRef<Path>) -> Result<Vec<Exec
 
     while let Some((env, payload)) = r.next().context("read next eventlog line")? {
         // payload bytes are JSON of the event (writer.write<T> uses serde_json::to_vec)
-        let ev: ExecEvent = serde_json::from_slice(&payload)
-            .with_context(|| format!("parse ExecEvent: seq={} stream={} kind={}", env.seq, env.stream, env.kind))?;
+        let ev: ExecEvent = serde_json::from_slice(&payload).with_context(|| {
+            format!(
+                "parse ExecEvent: seq={} stream={} kind={}",
+                env.seq, env.stream, env.kind
+            )
+        })?;
         out.push(ev);
     }
 

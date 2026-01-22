@@ -1,5 +1,5 @@
-use crate::time::Timestamp;
 use crate::instrument::InstrumentKey;
+use crate::time::Timestamp;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -113,7 +113,7 @@ pub enum EventPayload {
         to: u64,
     },
     ResyncStarted,
-    ResyncFinished, 
+    ResyncFinished,
     // Execution (strict)
     OrderSubmit {
         order_id: String,
@@ -140,7 +140,7 @@ pub enum EventPayload {
     CancelAck {
         order_id: String,
     },
-   Risk {
+    Risk {
         state: String,
     },
     KillSwitch {

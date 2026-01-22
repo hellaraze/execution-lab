@@ -1,6 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use adapters::{SeqTracker, AdapterSignal};
+use adapters::{AdapterSignal, SeqTracker};
 use eventlog::EventLogWriter;
 use exec::events::{ExecEvent, OrderId};
 use exec::order::snapshot::build_snapshot;
@@ -29,7 +29,10 @@ fn main() -> anyhow::Result<()> {
     // --- event #1 (ok) ---
     seq.observe(1).unwrap();
     if guard.allow_event() {
-        let ev = ExecEvent::OrderCreated { instrument: instrument.clone(), id: OrderId(1) };
+        let ev = ExecEvent::OrderCreated {
+            instrument: instrument.clone(),
+            id: OrderId(1),
+        };
         w.append_bytes("event", now_ns(), &serde_json::to_vec(&ev)?)?;
         live_events.push(ev);
     }
@@ -47,13 +50,17 @@ fn main() -> anyhow::Result<()> {
     // --- event #2 after snapshot ---
     seq.observe(11).unwrap();
     if guard.allow_event() {
-        let ev = ExecEvent::OrderAcked { instrument: instrument.clone(), id: OrderId(1) };
+        let ev = ExecEvent::OrderAcked {
+            instrument: instrument.clone(),
+            id: OrderId(1),
+        };
         w.append_bytes("event", now_ns(), &serde_json::to_vec(&ev)?)?;
         live_events.push(ev);
     }
 
     // --- FINAL COMMIT SNAPSHOT (hash) ---
-    let (_store, live_hash) = build_snapshot(&live_events).map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    let (_store, live_hash) =
+        build_snapshot(&live_events).map_err(|e| anyhow::anyhow!(e.to_string()))?;
     w.append_bytes("snapshot_hash", now_ns(), &live_hash.to_le_bytes())?;
 
     w.flush()?;

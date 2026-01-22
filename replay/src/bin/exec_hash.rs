@@ -2,9 +2,9 @@ use anyhow::{Context, Result};
 use el_core::event::Event;
 use eventlog::EventLogReader;
 
-use exec_bridge::adapter::adapt as adapt_exec;
 use exec::events::ExecEvent as ExecEv;
 use exec::order::snapshot::build_snapshot_multi;
+use exec_bridge::adapter::adapt as adapt_exec;
 
 fn main() -> Result<()> {
     let path = std::env::args()

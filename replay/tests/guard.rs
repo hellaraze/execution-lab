@@ -1,5 +1,5 @@
-use replay::ReplayGuard;
 use replay::state::ReplayHealth;
+use replay::ReplayGuard;
 
 #[test]
 fn replay_ignores_until_snapshot() {

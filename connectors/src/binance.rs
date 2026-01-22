@@ -1,7 +1,7 @@
-use execution_bridge::{Bridge, ExecOutbox};
 use el_core::event::{Event, EventPayload, EventType, Exchange};
-use el_core::time::{Timestamp, TimeSource};
 use el_core::instrument::InstrumentKey;
+use el_core::time::{TimeSource, Timestamp};
+use execution_bridge::{Bridge, ExecOutbox};
 use futures_util::StreamExt;
 use orderbook::OrderBook;
 use serde::Deserialize;
@@ -57,17 +57,18 @@ async fn fetch_snapshot(symbol: &str, limit: u32) -> anyhow::Result<DepthSnapsho
         limit
     );
 
-    let snap = reqwest::Client::new().get(url).send().await?.json::<DepthSnapshot>().await?;
+    let snap = reqwest::Client::new()
+        .get(url)
+        .send()
+        .await?
+        .json::<DepthSnapshot>()
+        .await?;
     Ok(snap)
 }
 
 #[allow(dead_code)]
-
 #[allow(dead_code)]
-
 #[allow(dead_code)]
-
-
 
 fn emit_snapshot_outbox(
     outbox: &mut execution_bridge::Bridge,
@@ -92,8 +93,8 @@ fn emit_snapshot_outbox(
         schema_version: 1,
         integrity_flags: vec![],
         payload: EventPayload::BookSnapshot {
-            bids: book.bids.iter().map(|(p,q)| (p.0, *q)).collect(),
-            asks: book.asks.iter().map(|(p,q)| (p.0, *q)).collect(),
+            bids: book.bids.iter().map(|(p, q)| (p.0, *q)).collect(),
+            asks: book.asks.iter().map(|(p, q)| (p.0, *q)).collect(),
         },
         meta: HashMap::new(),
     };
@@ -157,13 +158,25 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
     // 1) snapshot
     let snap = fetch_snapshot(symbol, 1000).await?;
     let mut book = OrderBook::new();
-    let bids = snap.bids.into_iter().map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0))).collect::<Vec<_>>();
-    let asks = snap.asks.into_iter().map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0))).collect::<Vec<_>>();
+    let bids = snap
+        .bids
+        .into_iter()
+        .map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0)))
+        .collect::<Vec<_>>();
+    let asks = snap
+        .asks
+        .into_iter()
+        .map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0)))
+        .collect::<Vec<_>>();
     book.apply_levels(&bids, &asks);
 
     let mut last_u = snap.last_update_id;
 
-    let mut outbox = Bridge::open_dedup(log_path, "binance", eventlog::writer::Durability::FsyncEvery { n: 1 })?;
+    let mut outbox = Bridge::open_dedup(
+        log_path,
+        "binance",
+        eventlog::writer::Durability::FsyncEvery { n: 1 },
+    )?;
     emit_snapshot_outbox(&mut outbox, &symbol.to_uppercase(), &book, last_u)?;
 
     // 2) diff stream
@@ -275,11 +288,10 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
             emit_snapshot_outbox(&mut outbox, &symbol.to_uppercase(), &book, last_u)?;
             last_checkpoint_ns = now;
         }
-    
+
             }
         }
     }
 
-    
     Ok(())
 }

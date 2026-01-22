@@ -8,7 +8,9 @@ pub struct OrderFsm {
 
 impl OrderFsm {
     pub fn new() -> Self {
-        Self { state: OrderState::New }
+        Self {
+            state: OrderState::New,
+        }
     }
 
     pub fn apply(&mut self, ev: ExecEvent) -> Result<(), crate::order_fsm_error::OrderFsmError> {
@@ -28,7 +30,12 @@ impl OrderFsm {
             (PartiallyFilled, OrderFilled) => Filled,
             (Accepted, OrderCanceled) => Canceled,
             (PartiallyFilled, OrderCanceled) => Canceled,
-            (s, ev) => return Err(crate::order_fsm_error::OrderFsmError::InvalidTransition { state: s, event: ev }),
+            (s, ev) => {
+                return Err(crate::order_fsm_error::OrderFsmError::InvalidTransition {
+                    state: s,
+                    event: ev,
+                })
+            }
         };
         Ok(())
     }

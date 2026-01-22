@@ -2,7 +2,7 @@
 mod tests {
     use super::super::seq::*;
     use el_core::event::{Event, EventPayload, EventType, Exchange};
-    use el_core::time::{Timestamp, TimeSource};
+    use el_core::time::{TimeSource, Timestamp};
     use std::collections::HashMap;
     use uuid::Uuid;
 
@@ -19,7 +19,10 @@ mod tests {
             seq: Some(seq),
             schema_version: 1,
             integrity_flags: vec![],
-            payload: EventPayload::BookDelta { bids: vec![], asks: vec![] },
+            payload: EventPayload::BookDelta {
+                bids: vec![],
+                asks: vec![],
+            },
             meta: HashMap::new(),
         }
     }
@@ -42,7 +45,6 @@ mod tests {
         assert!(msg.contains("regression"));
     }
 
-
     #[test]
     fn ignores_events_without_seq() {
         let mut t = SeqTracker::new();
@@ -59,5 +61,4 @@ mod tests {
         let msg = format!("{e}");
         assert!(msg.contains("regression"));
     }
-
 }

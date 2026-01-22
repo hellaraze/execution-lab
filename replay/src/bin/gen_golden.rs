@@ -22,7 +22,8 @@ fn main() -> Result<()> {
         .and_then(|s| s.parse().ok())
         .unwrap_or(200);
 
-    let mut r = EventLogReader::open(&log_path).with_context(|| format!("open log: {}", log_path))?;
+    let mut r =
+        EventLogReader::open(&log_path).with_context(|| format!("open log: {}", log_path))?;
     let mut book = OrderBook::new();
 
     let mut prev_chain: u64 = 0;

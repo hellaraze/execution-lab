@@ -40,15 +40,43 @@ pub fn fold_view(events: &[OrderEvent], order_qty: f64) -> Result<OrderView, Ord
             }
 
             (OrderState::Sent, EventType::OrderReject, EventPayload::OrderReject { .. })
-            | (OrderState::Acknowledged, EventType::OrderReject, EventPayload::OrderReject { .. })
-            | (OrderState::PartiallyFilled, EventType::OrderReject, EventPayload::OrderReject { .. })
-            | (OrderState::CancelRequested, EventType::OrderReject, EventPayload::OrderReject { .. }) => {
-                OrderState::Rejected
-            }
+            | (
+                OrderState::Acknowledged,
+                EventType::OrderReject,
+                EventPayload::OrderReject { .. },
+            )
+            | (
+                OrderState::PartiallyFilled,
+                EventType::OrderReject,
+                EventPayload::OrderReject { .. },
+            )
+            | (
+                OrderState::CancelRequested,
+                EventType::OrderReject,
+                EventPayload::OrderReject { .. },
+            ) => OrderState::Rejected,
 
             // fills (idempotent by fill_id)
-            (OrderState::Acknowledged, EventType::Fill, EventPayload::Fill { fill_id, price, qty, .. })
-            | (OrderState::PartiallyFilled, EventType::Fill, EventPayload::Fill { fill_id, price, qty, .. }) => {
+            (
+                OrderState::Acknowledged,
+                EventType::Fill,
+                EventPayload::Fill {
+                    fill_id,
+                    price,
+                    qty,
+                    ..
+                },
+            )
+            | (
+                OrderState::PartiallyFilled,
+                EventType::Fill,
+                EventPayload::Fill {
+                    fill_id,
+                    price,
+                    qty,
+                    ..
+                },
+            ) => {
                 if !seen_fill_ids.insert(fill_id.clone()) {
                     // duplicate fill => idempotent noop on accounting/state
                     if (filled_qty - order_qty).abs() <= EPS {
@@ -82,10 +110,16 @@ pub fn fold_view(events: &[OrderEvent], order_qty: f64) -> Result<OrderView, Ord
             }
 
             // cancel flow
-            (OrderState::Acknowledged, EventType::CancelRequest, EventPayload::CancelRequest { .. })
-            | (OrderState::PartiallyFilled, EventType::CancelRequest, EventPayload::CancelRequest { .. }) => {
-                OrderState::CancelRequested
-            }
+            (
+                OrderState::Acknowledged,
+                EventType::CancelRequest,
+                EventPayload::CancelRequest { .. },
+            )
+            | (
+                OrderState::PartiallyFilled,
+                EventType::CancelRequest,
+                EventPayload::CancelRequest { .. },
+            ) => OrderState::CancelRequested,
 
             (OrderState::CancelRequested, EventType::CancelAck, EventPayload::CancelAck { .. }) => {
                 OrderState::Cancelled
@@ -112,7 +146,11 @@ pub fn fold_view(events: &[OrderEvent], order_qty: f64) -> Result<OrderView, Ord
         };
 
         view.filled_qty = filled_qty;
-        view.avg_px = if filled_qty > 0.0 { notional / filled_qty } else { 0.0 };
+        view.avg_px = if filled_qty > 0.0 {
+            notional / filled_qty
+        } else {
+            0.0
+        };
 
         if !finite(view.filled_qty) || !finite(view.avg_px) {
             return Err(OrderFoldError::InvalidNumber);

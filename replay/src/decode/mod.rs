@@ -14,7 +14,10 @@ pub enum DecodeError {
     Unsupported(String),
 
     #[error("payload key mismatch for event_type={event_type}: expected key={expected}")]
-    PayloadKeyMismatch { event_type: String, expected: &'static str },
+    PayloadKeyMismatch {
+        event_type: String,
+        expected: &'static str,
+    },
 
     #[error("sequence regression: prev={prev} curr={curr}")]
     SeqRegression { prev: u64, curr: u64 },

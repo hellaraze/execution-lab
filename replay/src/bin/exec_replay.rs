@@ -2,11 +2,11 @@ use anyhow::{Context, Result};
 use el_core::event::{Event, EventType};
 use eventlog::EventLogReader;
 
-use exec_bridge::adapter::adapt as adapt_exec;
 use exec::events::ExecEvent as ExecEv;
 use exec::guard::ExecGuard;
 use exec::order::snapshot::build_snapshot_multi;
 use exec::order::types::OrderState;
+use exec_bridge::adapter::adapt as adapt_exec;
 
 fn main() -> Result<()> {
     let path = std::env::args()

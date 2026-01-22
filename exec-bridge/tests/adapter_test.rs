@@ -2,7 +2,7 @@ use exec_bridge::adapter::adapt;
 
 use el_core::event::{Event, EventPayload, EventType, Exchange};
 use el_core::instrument::InstrumentKey as CoreIK;
-use el_core::time::{Timestamp, TimeSource};
+use el_core::time::{TimeSource, Timestamp};
 
 fn mk_event(event_type: EventType, payload: EventPayload) -> Event {
     let ts = Timestamp::new(0, TimeSource::Exchange);
@@ -27,7 +27,9 @@ fn mk_event(event_type: EventType, payload: EventPayload) -> Event {
 fn maps_order_ack_to_order_acked() {
     let e = mk_event(
         EventType::OrderAck,
-        EventPayload::OrderAck { order_id: "42".to_string() },
+        EventPayload::OrderAck {
+            order_id: "42".to_string(),
+        },
     );
 
     let out = adapt(&e).expect("must map");
@@ -55,7 +57,12 @@ fn maps_fill_to_order_fill() {
 
     let out = adapt(&e).expect("must map");
     match out {
-        exec::events::ExecEvent::OrderFill { instrument, id, filled_qty, avg_px } => {
+        exec::events::ExecEvent::OrderFill {
+            instrument,
+            id,
+            filled_qty,
+            avg_px,
+        } => {
             assert_eq!(instrument.exchange, "Binance");
             assert_eq!(instrument.symbol, "BTCUSDT");
             assert_eq!(id.0, 7);
@@ -70,7 +77,9 @@ fn maps_fill_to_order_fill() {
 fn rejects_non_u64_order_id() {
     let e = mk_event(
         EventType::OrderAck,
-        EventPayload::OrderAck { order_id: "not-a-number".to_string() },
+        EventPayload::OrderAck {
+            order_id: "not-a-number".to_string(),
+        },
     );
 
     assert!(adapt(&e).is_none());
@@ -80,7 +89,12 @@ fn rejects_non_u64_order_id() {
 fn maps_submit_to_order_created() {
     let e = mk_event(
         EventType::OrderSubmit,
-        EventPayload::OrderSubmit { order_id: "1".to_string(), side: "BUY".to_string(), price: 1.0, qty: 1.0 },
+        EventPayload::OrderSubmit {
+            order_id: "1".to_string(),
+            side: "BUY".to_string(),
+            price: 1.0,
+            qty: 1.0,
+        },
     );
 
     let out = adapt(&e).expect("must map");
@@ -98,7 +112,9 @@ fn maps_submit_to_order_created() {
 fn maps_cancel_request_to_order_cancel_requested() {
     let e = mk_event(
         EventType::CancelRequest,
-        EventPayload::CancelRequest { order_id: "2".to_string() },
+        EventPayload::CancelRequest {
+            order_id: "2".to_string(),
+        },
     );
 
     let out = adapt(&e).expect("must map");

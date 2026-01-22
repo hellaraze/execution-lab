@@ -1,6 +1,6 @@
 use anyhow::Result;
 use el_core::event::{Event, EventPayload, EventType, Exchange};
-use el_core::time::{Timestamp, TimeSource};
+use el_core::time::{TimeSource, Timestamp};
 use eventlog::EventLogWriter;
 use std::collections::HashMap;
 use std::fs;
@@ -53,8 +53,10 @@ fn gap_is_detected_and_fails_fast() -> Result<()> {
     let mut lines: Vec<&str> = s.lines().collect();
     // remove line 40 (1-indexed) => gap
     lines.remove(39);
-    let corrupted = lines.join("
-") + "
+    let corrupted = lines.join(
+        "
+",
+    ) + "
 ";
     fs::write(&dir, corrupted)?;
 

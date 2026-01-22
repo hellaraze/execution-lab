@@ -18,7 +18,10 @@ fn main() -> anyhow::Result<()> {
 
         if env.kind == "snapshot_hash" {
             if payload.len() != 8 {
-                anyhow::bail!("snapshot_hash payload must be 8 bytes u64, got {}", payload.len());
+                anyhow::bail!(
+                    "snapshot_hash payload must be 8 bytes u64, got {}",
+                    payload.len()
+                );
             }
             let mut b = [0u8; 8];
             b.copy_from_slice(&payload);
@@ -41,12 +44,17 @@ fn main() -> anyhow::Result<()> {
         }
     }
 
-    let (_store, replay_hash) = build_snapshot(&events).map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    let (_store, replay_hash) =
+        build_snapshot(&events).map_err(|e| anyhow::anyhow!(e.to_string()))?;
     println!("REPLAY EXEC OK. replay_hash={}", replay_hash);
 
-    let snap_hash = last_snapshot_hash.ok_or_else(|| anyhow::anyhow!("no snapshot_hash found in log"))?;
+    let snap_hash =
+        last_snapshot_hash.ok_or_else(|| anyhow::anyhow!("no snapshot_hash found in log"))?;
     if snap_hash != replay_hash {
-        panic!("EXEC HASH MISMATCH: snapshot_hash={} replay={}", snap_hash, replay_hash);
+        panic!(
+            "EXEC HASH MISMATCH: snapshot_hash={} replay={}",
+            snap_hash, replay_hash
+        );
     }
 
     println!("OK: snapshot_hash == replay_hash (halt on mismatch enabled)");

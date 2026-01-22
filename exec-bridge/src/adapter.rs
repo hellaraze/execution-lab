@@ -7,10 +7,7 @@ fn oid(s: &str) -> Option<OrderId> {
 }
 
 fn ik(e: &Event) -> exec::util::instrument::InstrumentKey {
-    exec::util::instrument::InstrumentKey::new(
-        format!("{:?}", e.exchange),
-        e.symbol.clone(),
-    )
+    exec::util::instrument::InstrumentKey::new(format!("{:?}", e.exchange), e.symbol.clone())
 }
 
 pub fn adapt(e: &Event) -> Option<ExecEvent> {
@@ -22,24 +19,46 @@ pub fn adapt(e: &Event) -> Option<ExecEvent> {
             Some(ExecEvent::OrderCreated { instrument, id })
         }
 
-        (EventType::OrderAck, EventPayload::OrderAck { order_id }) => {
-            Some(ExecEvent::OrderAcked { instrument, id: oid(order_id)? })
-        }
+        (EventType::OrderAck, EventPayload::OrderAck { order_id }) => Some(ExecEvent::OrderAcked {
+            instrument,
+            id: oid(order_id)?,
+        }),
 
         (EventType::OrderReject, EventPayload::OrderReject { order_id, reason }) => {
-            Some(ExecEvent::OrderRejected { instrument, id: oid(order_id)?, reason: reason.clone() })
+            Some(ExecEvent::OrderRejected {
+                instrument,
+                id: oid(order_id)?,
+                reason: reason.clone(),
+            })
         }
 
-        (EventType::Fill, EventPayload::Fill { order_id, price, qty, .. }) => {
-            Some(ExecEvent::OrderFill { instrument, id: oid(order_id)?, filled_qty: *qty, avg_px: *price })
-        }
+        (
+            EventType::Fill,
+            EventPayload::Fill {
+                order_id,
+                price,
+                qty,
+                ..
+            },
+        ) => Some(ExecEvent::OrderFill {
+            instrument,
+            id: oid(order_id)?,
+            filled_qty: *qty,
+            avg_px: *price,
+        }),
 
         (EventType::CancelAck, EventPayload::CancelAck { order_id }) => {
-            Some(ExecEvent::OrderCancelled { instrument, id: oid(order_id)? })
+            Some(ExecEvent::OrderCancelled {
+                instrument,
+                id: oid(order_id)?,
+            })
         }
 
         (EventType::CancelRequest, EventPayload::CancelRequest { order_id }) => {
-            Some(ExecEvent::OrderCancelRequested { instrument, id: oid(order_id)? })
+            Some(ExecEvent::OrderCancelRequested {
+                instrument,
+                id: oid(order_id)?,
+            })
         }
 
         _ => None,

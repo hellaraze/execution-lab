@@ -21,7 +21,9 @@ fn bbo_replay_not_empty() {
             out.push_str(line);
             out.push('\n');
         }
-        if i >= 49 { break; }
+        if i >= 49 {
+            break;
+        }
     }
     fs::write(tmp_raw, out).expect("write tmp raw");
 
@@ -44,14 +46,26 @@ fn bbo_replay_not_empty() {
 
     // replay should materialize bid/ask from TickerBbo
     let out = Command::new("cargo")
-        .args(["run", "-q", "-p", "replay", "--bin", "replay", "--", tmp_evlog])
+        .args([
+            "run", "-q", "-p", "replay", "--bin", "replay", "--", tmp_evlog,
+        ])
         .output()
         .expect("run replay");
-    assert!(out.status.success(), "replay failed: {}", String::from_utf8_lossy(&out.stderr));
+    assert!(
+        out.status.success(),
+        "replay failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
 
     let stdout = String::from_utf8_lossy(&out.stdout);
-    assert!(stdout.contains("bid=Some("), "expected bid not empty; got: {stdout}");
-    assert!(stdout.contains("ask=Some("), "expected ask not empty; got: {stdout}");
+    assert!(
+        stdout.contains("bid=Some("),
+        "expected bid not empty; got: {stdout}"
+    );
+    assert!(
+        stdout.contains("ask=Some("),
+        "expected ask not empty; got: {stdout}"
+    );
 
     let _ = fs::remove_file(tmp_raw);
     let _ = fs::remove_file(tmp_evlog);

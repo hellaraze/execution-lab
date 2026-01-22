@@ -12,7 +12,9 @@ pub struct ExecGuard {
 
 impl ExecGuard {
     pub fn new() -> Self {
-        Self { state: GuardState::Healthy }
+        Self {
+            state: GuardState::Healthy,
+        }
     }
 
     pub fn allow_exec(&self) -> bool {

@@ -22,7 +22,10 @@ impl Bridge {
     }
 
     pub fn new(writer: EventLogWriter) -> Self {
-        Self { writer, seen: HashSet::new() }
+        Self {
+            writer,
+            seen: HashSet::new(),
+        }
     }
     pub fn open_dedup(
         path: impl AsRef<std::path::Path>,
@@ -62,7 +65,7 @@ impl ExecOutbox for Bridge {
         // ЖБ-контракт:
         // - writer.append MUST be idempotent by EventId
         // - duplicate EventId -> NO-OP
-        
+
         let payload = serde_json::to_vec(&ev)?;
         let kind = "event";
         let ts_ns: u64 = ev.ts_proc.nanos.try_into()?;

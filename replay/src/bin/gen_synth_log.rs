@@ -1,9 +1,9 @@
 use anyhow::Result;
 use el_core::event::{Event, EventPayload, EventType, Exchange};
-use el_core::time::{TimeSource, Timestamp};
 use el_core::instrument::InstrumentKey;
-use eventlog::EventLogWriter;
+use el_core::time::{TimeSource, Timestamp};
 use eventlog::writer::Durability;
+use eventlog::EventLogWriter;
 use std::collections::HashMap;
 use uuid::Uuid;
 
@@ -45,15 +45,23 @@ fn main() -> Result<()> {
         let bid_px = 100.0 - (i % 20) as f64 * 0.5;
         let ask_px = 100.5 + (i % 20) as f64 * 0.5;
 
-        let bid_qty = if i % 17 == 0 { 0.0 } else { 1.0 + (i % 5) as f64 * 0.1 };
-        let ask_qty = if i % 19 == 0 { 0.0 } else { 1.5 + (i % 7) as f64 * 0.1 };
+        let bid_qty = if i % 17 == 0 {
+            0.0
+        } else {
+            1.0 + (i % 5) as f64 * 0.1
+        };
+        let ask_qty = if i % 19 == 0 {
+            0.0
+        } else {
+            1.5 + (i % 7) as f64 * 0.1
+        };
 
         let ev = Event {
             id: Uuid::new_v4(),
             event_type: EventType::BookDelta,
             exchange: Exchange::Binance,
             symbol: "BTCUSDT".to_string(),
-              instrument: InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
+            instrument: InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
             ts_exchange: None,
             ts_recv: ts(1 + k as i64),
             ts_proc: ts(1 + k as i64),

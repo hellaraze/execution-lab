@@ -1,7 +1,7 @@
 use anyhow::Result;
 use el_core::event::{Event, EventPayload, EventType, Exchange};
-use el_core::time::{TimeSource, Timestamp};
 use el_core::instrument::InstrumentKey;
+use el_core::time::{TimeSource, Timestamp};
 use eventlog::writer::Durability;
 use eventlog::EventLogWriter;
 use std::collections::HashMap;
@@ -56,7 +56,9 @@ fn main() -> Result<()> {
         seq: Some(1),
         schema_version: 1,
         integrity_flags: vec![],
-        payload: EventPayload::OrderAck { order_id: "42".to_string() },
+        payload: EventPayload::OrderAck {
+            order_id: "42".to_string(),
+        },
         meta: HashMap::new(),
     };
     w.write(&ack)?;
@@ -97,7 +99,9 @@ fn main() -> Result<()> {
         seq: Some(4),
         schema_version: 1,
         integrity_flags: vec![],
-        payload: EventPayload::CancelRequest { order_id: "42".to_string() },
+        payload: EventPayload::CancelRequest {
+            order_id: "42".to_string(),
+        },
         meta: HashMap::new(),
     };
     w.write(&cancel_req)?;
@@ -115,7 +119,9 @@ fn main() -> Result<()> {
         seq: Some(3),
         schema_version: 1,
         integrity_flags: vec![],
-        payload: EventPayload::CancelAck { order_id: "42".to_string() },
+        payload: EventPayload::CancelAck {
+            order_id: "42".to_string(),
+        },
         meta: HashMap::new(),
     };
     w.write(&cancel)?;

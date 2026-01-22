@@ -1,8 +1,8 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use eventlog::{EventLogReader, EventLogWriter};
 use eventlog::hash::stable_hash;
 use eventlog::snapshot::Snapshot;
+use eventlog::{EventLogReader, EventLogWriter};
 
 fn now_ns() -> u64 {
     let d = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();

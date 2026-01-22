@@ -2,14 +2,23 @@ use std::process::Command;
 
 #[test]
 fn binance_depth_fixture_replay_not_empty() {
-    let log_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/binance_depth_fixture.eventlog");
+    let log_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/data/binance_depth_fixture.eventlog"
+    );
 
     let out = Command::new("cargo")
-        .args(["run", "-q", "-p", "replay", "--bin", "replay", "--", log_path])
+        .args([
+            "run", "-q", "-p", "replay", "--bin", "replay", "--", log_path,
+        ])
         .output()
         .expect("run replay");
 
-    assert!(out.status.success(), "replay failed: {}", String::from_utf8_lossy(&out.stderr));
+    assert!(
+        out.status.success(),
+        "replay failed: {}",
+        String::from_utf8_lossy(&out.stderr)
+    );
     let s = String::from_utf8_lossy(&out.stdout);
 
     // ждём что replay реально применил что-то: bid/ask должны быть Some(

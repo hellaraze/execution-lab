@@ -91,7 +91,10 @@ fn main() -> Result<()> {
     }
 
     if n_delta_before_snapshot > 0 {
-        eprintln!("WARN: ignored deltas before first snapshot: {}", n_delta_before_snapshot);
+        eprintln!(
+            "WARN: ignored deltas before first snapshot: {}",
+            n_delta_before_snapshot
+        );
     }
 
     let bid = book.top_bid();
@@ -99,15 +102,7 @@ fn main() -> Result<()> {
     let h = hash_book(&book);
     println!(
         "FINAL n={} seq={:?} bid={:?} ask={:?} hash={} | snap={} delta={} bbo={} delta_ignored={}",
-        n,
-        last_seq,
-        bid,
-        ask,
-        h,
-        n_snapshot,
-        n_delta,
-        n_bbo,
-        n_delta_before_snapshot
+        n, last_seq, bid, ask, h, n_snapshot, n_delta, n_bbo, n_delta_before_snapshot
     );
 
     Ok(())

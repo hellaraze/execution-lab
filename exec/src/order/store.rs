@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 
-use crate::events::{ExecEvent, OrderId};
 use super::types::{OrderState, OrderView};
+use crate::events::{ExecEvent, OrderId};
 
 #[derive(Debug, Default)]
 pub struct OrderStore {
@@ -14,7 +14,10 @@ pub struct OrderStore {
 
 impl OrderStore {
     pub fn new() -> Self {
-        Self { by_id: HashMap::new(), filled_notional: HashMap::new() }
+        Self {
+            by_id: HashMap::new(),
+            filled_notional: HashMap::new(),
+        }
     }
 
     pub fn apply_all(&mut self, events: &[ExecEvent]) -> Result<()> {
@@ -44,9 +47,22 @@ impl OrderStore {
             }
 
             // Treat OrderFill as DELTA: (filled_qty += delta_qty), avg_px recomputed from notional.
-            ExecEvent::OrderFill { id, filled_qty, avg_px, .. } => {
-                if !filled_qty.is_finite() || !avg_px.is_finite() || *filled_qty < 0.0 || *avg_px <= 0.0 {
-                    anyhow::bail!("invalid fill numbers: filled_qty={} avg_px={}", filled_qty, avg_px);
+            ExecEvent::OrderFill {
+                id,
+                filled_qty,
+                avg_px,
+                ..
+            } => {
+                if !filled_qty.is_finite()
+                    || !avg_px.is_finite()
+                    || *filled_qty < 0.0
+                    || *avg_px <= 0.0
+                {
+                    anyhow::bail!(
+                        "invalid fill numbers: filled_qty={} avg_px={}",
+                        filled_qty,
+                        avg_px
+                    );
                 }
 
                 let v = self.by_id.entry(*id).or_insert_with(OrderView::new);

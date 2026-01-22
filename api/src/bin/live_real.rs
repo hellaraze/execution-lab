@@ -1,9 +1,9 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use adapters::{SeqTracker, AdapterSignal};
-use eventlog::{EventLogReader, EventLogWriter};
+use adapters::{AdapterSignal, SeqTracker};
 use eventlog::hash::stable_hash;
 use eventlog::snapshot::Snapshot;
+use eventlog::{EventLogReader, EventLogWriter};
 use replay::ReplayGuard;
 
 fn now_ns() -> u64 {

@@ -1,11 +1,11 @@
-pub mod wire;
 pub mod normalized;
 pub mod seq;
+pub mod wire;
 
-use wire::WireEvent;
 use normalized::{NormalizedEvent, NormalizedKind};
+use wire::WireEvent;
 
-pub use seq::{SeqTracker, SeqState, AdapterSignal};
+pub use seq::{AdapterSignal, SeqState, SeqTracker};
 
 pub fn adapt(event: WireEvent) -> NormalizedEvent {
     NormalizedEvent {

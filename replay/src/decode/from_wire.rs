@@ -5,7 +5,9 @@ use el_core::instrument::InstrumentKey;
 use el_core::time::{TimeSource, Timestamp};
 use uuid::Uuid;
 
-const EVENT_ID_NAMESPACE: Uuid = Uuid::from_bytes([0x45,0x4c,0x2d,0x45,0x56,0x54,0x2d,0x49,0x44,0x2d,0x4e,0x53,0x50,0x41,0x43,0x45]);
+const EVENT_ID_NAMESPACE: Uuid = Uuid::from_bytes([
+    0x45, 0x4c, 0x2d, 0x45, 0x56, 0x54, 0x2d, 0x49, 0x44, 0x2d, 0x4e, 0x53, 0x50, 0x41, 0x43, 0x45,
+]);
 
 fn parse_time_source(s: &str) -> Option<TimeSource> {
     match s {
@@ -19,7 +21,10 @@ fn parse_time_source(s: &str) -> Option<TimeSource> {
 fn ts_from_wire(ts: &WireTs) -> Result<Timestamp, DecodeError> {
     let src = parse_time_source(&ts.source).ok_or(DecodeError::Invalid("ts.source"))?;
     // wire nanos is u64, core expects i64
-    let nanos_i64: i64 = ts.nanos.try_into().map_err(|_| DecodeError::Invalid("ts.nanos"))?;
+    let nanos_i64: i64 = ts
+        .nanos
+        .try_into()
+        .map_err(|_| DecodeError::Invalid("ts.nanos"))?;
     Ok(Timestamp::new(nanos_i64, src))
 }
 
@@ -29,7 +34,6 @@ fn ts_opt_from_wire(ts: &Option<WireTs>) -> Result<Option<Timestamp>, DecodeErro
         Some(x) => Ok(Some(ts_from_wire(x)?)),
     }
 }
-
 
 fn event_id_from_wire(w: &WireEvent, event_type: &EventType) -> Uuid {
     // Deterministic ID for replay/audit: same wire -> same id
@@ -92,8 +96,12 @@ pub fn decode_event(w: WireEvent) -> Result<Event, DecodeError> {
                     expected: "BookSnapshot",
                 })?
                 .clone();
-            let lv: BookLevels = serde_json::from_value(v).map_err(|_| DecodeError::Invalid("payload.BookSnapshot"))?;
-            EventPayload::BookSnapshot { bids: lv.bids, asks: lv.asks }
+            let lv: BookLevels = serde_json::from_value(v)
+                .map_err(|_| DecodeError::Invalid("payload.BookSnapshot"))?;
+            EventPayload::BookSnapshot {
+                bids: lv.bids,
+                asks: lv.asks,
+            }
         }
         EventType::BookDelta => {
             let v = w
@@ -104,8 +112,12 @@ pub fn decode_event(w: WireEvent) -> Result<Event, DecodeError> {
                     expected: "BookDelta",
                 })?
                 .clone();
-            let lv: BookLevels = serde_json::from_value(v).map_err(|_| DecodeError::Invalid("payload.BookDelta"))?;
-            EventPayload::BookDelta { bids: lv.bids, asks: lv.asks }
+            let lv: BookLevels =
+                serde_json::from_value(v).map_err(|_| DecodeError::Invalid("payload.BookDelta"))?;
+            EventPayload::BookDelta {
+                bids: lv.bids,
+                asks: lv.asks,
+            }
         }
         EventType::TickerBbo => {
             let v = w
@@ -116,8 +128,12 @@ pub fn decode_event(w: WireEvent) -> Result<Event, DecodeError> {
                     expected: "TickerBbo",
                 })?
                 .clone();
-            let b: TickerBbo = serde_json::from_value(v).map_err(|_| DecodeError::Invalid("payload.TickerBbo"))?;
-            EventPayload::TickerBbo { bid: b.bid, ask: b.ask }
+            let b: TickerBbo =
+                serde_json::from_value(v).map_err(|_| DecodeError::Invalid("payload.TickerBbo"))?;
+            EventPayload::TickerBbo {
+                bid: b.bid,
+                ask: b.ask,
+            }
         }
         // not in your sample logs yet; keep strict
         _ => return Err(DecodeError::Unsupported(w.event_type)),

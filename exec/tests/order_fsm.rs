@@ -1,5 +1,5 @@
-use exec::order_fsm::OrderFsm;
 use el_core::event::ExecEvent::*;
+use exec::order_fsm::OrderFsm;
 use exec::order_state::OrderState::*;
 
 #[test]

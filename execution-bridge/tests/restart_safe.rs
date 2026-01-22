@@ -1,10 +1,10 @@
-use execution_bridge::*;
 use el_core::event::{Event, EventId, EventPayload, EventType, Exchange};
 use el_core::instrument::InstrumentKey;
-use el_core::time::{Timestamp, TimeSource};
+use el_core::time::{TimeSource, Timestamp};
 use eventlog::{EventLogReader, EventLogWriter};
-use uuid::Uuid;
+use execution_bridge::*;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 fn mk_event(id: EventId) -> Event {
     Event {
@@ -19,7 +19,9 @@ fn mk_event(id: EventId) -> Event {
         seq: None,
         schema_version: 1,
         integrity_flags: vec![],
-        payload: EventPayload::Connectivity { status: "ok".to_string() },
+        payload: EventPayload::Connectivity {
+            status: "ok".to_string(),
+        },
         meta: HashMap::new(),
     }
 }
@@ -32,9 +34,13 @@ fn count_id(path: &std::path::Path, id: EventId) -> usize {
             Some(v) => v,
             None => break,
         };
-        if env.kind != "event" { continue; }
+        if env.kind != "event" {
+            continue;
+        }
         let e: Event = serde_json::from_slice(&payload).unwrap();
-        if e.id == id { n += 1; }
+        if e.id == id {
+            n += 1;
+        }
     }
     n
 }
@@ -48,14 +54,16 @@ fn restart_safe_exactly_once() {
     let ev = mk_event(id);
 
     {
-        let w = EventLogWriter::open_append(&path, "exec", eventlog::writer::Durability::Buffered).unwrap();
+        let w = EventLogWriter::open_append(&path, "exec", eventlog::writer::Durability::Buffered)
+            .unwrap();
         let mut b1 = Bridge::new(w);
         b1.publish_once(ev.clone()).unwrap();
     }
 
     // reopen and try to publish again
     {
-        let mut b2 = Bridge::open_dedup(&path, "exec", eventlog::writer::Durability::Buffered).unwrap();
+        let mut b2 =
+            Bridge::open_dedup(&path, "exec", eventlog::writer::Durability::Buffered).unwrap();
         b2.publish_once(ev.clone()).unwrap();
     }
 

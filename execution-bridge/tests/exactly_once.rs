@@ -1,10 +1,10 @@
-use execution_bridge::*;
 use el_core::event::{Event, EventId, EventPayload, EventType, Exchange};
 use el_core::instrument::InstrumentKey;
-use el_core::time::{Timestamp, TimeSource};
+use el_core::time::{TimeSource, Timestamp};
 use eventlog::{EventLogReader, EventLogWriter};
-use uuid::Uuid;
+use execution_bridge::*;
 use std::collections::HashMap;
+use uuid::Uuid;
 
 fn mk_event(id: EventId) -> Event {
     Event {
@@ -19,7 +19,9 @@ fn mk_event(id: EventId) -> Event {
         seq: None,
         schema_version: 1,
         integrity_flags: vec![],
-        payload: EventPayload::Connectivity { status: "ok".to_string() },
+        payload: EventPayload::Connectivity {
+            status: "ok".to_string(),
+        },
         meta: HashMap::new(),
     }
 }
@@ -29,7 +31,8 @@ fn exactly_once_append_is_idempotent_by_event_id() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("exec_outbox.log");
 
-    let w = EventLogWriter::open_append(&path, "exec", eventlog::writer::Durability::Buffered).unwrap();
+    let w =
+        EventLogWriter::open_append(&path, "exec", eventlog::writer::Durability::Buffered).unwrap();
     let mut bridge = Bridge::new(w);
 
     let id = Uuid::new_v4();
@@ -46,11 +49,15 @@ fn exactly_once_append_is_idempotent_by_event_id() {
             Some(v) => v,
             None => break,
         };
-        if env.kind != "event" { continue; }
+        if env.kind != "event" {
+            continue;
+        }
 
         let e: Event = serde_json::from_slice(&payload).unwrap();
 
-        if e.id == ev.id { n += 1; }
+        if e.id == ev.id {
+            n += 1;
+        }
     }
 
     assert_eq!(n, 1, "expected exactly-once by EventId, got {n}");

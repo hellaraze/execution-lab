@@ -1,5 +1,5 @@
-use std::collections::BTreeMap;
 use ordered_float::OrderedFloat;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone)]
 pub struct OrderBook {
@@ -19,8 +19,12 @@ impl OrderBook {
         if !price.is_finite() || !qty.is_finite() {
             panic!("non-finite bid update: price={} qty={}", price, qty);
         }
-        if price == 0.0 { price = 0.0; }
-        if qty == 0.0 { qty = 0.0; }
+        if price == 0.0 {
+            price = 0.0;
+        }
+        if qty == 0.0 {
+            qty = 0.0;
+        }
         let p = OrderedFloat(price);
         if qty == 0.0 {
             self.bids.remove(&p);
@@ -33,8 +37,12 @@ impl OrderBook {
         if !price.is_finite() || !qty.is_finite() {
             panic!("non-finite ask update: price={} qty={}", price, qty);
         }
-        if price == 0.0 { price = 0.0; }
-        if qty == 0.0 { qty = 0.0; }
+        if price == 0.0 {
+            price = 0.0;
+        }
+        if qty == 0.0 {
+            qty = 0.0;
+        }
         let p = OrderedFloat(price);
         if qty == 0.0 {
             self.asks.remove(&p);

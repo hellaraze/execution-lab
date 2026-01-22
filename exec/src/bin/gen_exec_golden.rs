@@ -16,8 +16,7 @@ fn main() -> Result<()> {
 
     for line in r.lines() {
         let line = line?;
-        let mut v: serde_json::Value =
-            serde_json::from_str(&line).with_context(|| "parse json")?;
+        let mut v: serde_json::Value = serde_json::from_str(&line).with_context(|| "parse json")?;
 
         // deterministic id injection
         if v.get("id").is_none() {
@@ -28,8 +27,7 @@ fn main() -> Result<()> {
             v["id"] = serde_json::Value::String(Uuid::from_bytes(b).to_string());
         }
 
-        let ev: Event =
-            serde_json::from_value(v).with_context(|| "parse core Event")?;
+        let ev: Event = serde_json::from_value(v).with_context(|| "parse core Event")?;
 
         if let Some(x) = to_exec_event(&ev)? {
             exec_events.push(x);

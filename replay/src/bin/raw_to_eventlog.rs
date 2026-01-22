@@ -26,12 +26,15 @@ fn main() -> Result<()> {
             continue;
         }
 
-        let mut v: serde_json::Value = serde_json::from_str(&s)
-            .with_context(|| format!("parse raw json line {}", n + 1))?;
+        let mut v: serde_json::Value =
+            serde_json::from_str(&s).with_context(|| format!("parse raw json line {}", n + 1))?;
 
         // legacy raw: inject `instrument` if missing
         if v.get("instrument").is_none() {
-            let exchange = v.get("exchange").cloned().unwrap_or(serde_json::Value::Null);
+            let exchange = v
+                .get("exchange")
+                .cloned()
+                .unwrap_or(serde_json::Value::Null);
             let symbol = v.get("symbol").cloned().unwrap_or(serde_json::Value::Null);
             v["instrument"] = serde_json::json!({ "exchange": exchange, "symbol": symbol });
         }
@@ -43,6 +46,9 @@ fn main() -> Result<()> {
     }
 
     w.flush().context("flush")?;
-    println!("raw_to_eventlog ok: in={} out={} n={}", in_path, out_path, n);
+    println!(
+        "raw_to_eventlog ok: in={} out={} n={}",
+        in_path, out_path, n
+    );
     Ok(())
 }

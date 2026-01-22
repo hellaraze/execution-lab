@@ -1,5 +1,5 @@
-use execution_bridge::{Bridge, ExecOutbox};
 use el_core::event::Event;
+use execution_bridge::{Bridge, ExecOutbox};
 use tempfile::tempdir;
 use uuid::Uuid;
 
@@ -11,7 +11,7 @@ fn mk_event(id: Uuid) -> Event {
         symbol: "TEST".to_string(),
         instrument: el_core::instrument::InstrumentKey::new(
             el_core::event::Exchange::Binance,
-            "TEST"
+            "TEST",
         ),
         ts_exchange: None,
         ts_recv: el_core::time::Timestamp::new(1, el_core::time::TimeSource::Receive),
@@ -19,7 +19,9 @@ fn mk_event(id: Uuid) -> Event {
         seq: None,
         schema_version: 1,
         integrity_flags: vec![],
-        payload: el_core::event::EventPayload::Connectivity { status: "ok".into() },
+        payload: el_core::event::EventPayload::Connectivity {
+            status: "ok".into(),
+        },
         meta: Default::default(),
     }
 }
@@ -36,7 +38,8 @@ fn crash_restart_no_duplicates() {
             &path,
             "exec",
             eventlog::writer::Durability::FsyncEvery { n: 1 },
-        ).unwrap();
+        )
+        .unwrap();
         b.publish_once(mk_event(id)).unwrap();
     }
 
@@ -45,16 +48,21 @@ fn crash_restart_no_duplicates() {
             &path,
             "exec",
             eventlog::writer::Durability::FsyncEvery { n: 1 },
-        ).unwrap();
+        )
+        .unwrap();
         b.publish_once(mk_event(id)).unwrap();
     }
 
     let mut r = eventlog::EventLogReader::open(&path).unwrap();
     let mut n = 0;
     while let Some((env, payload)) = r.next().unwrap() {
-        if env.kind != "event" { continue; }
+        if env.kind != "event" {
+            continue;
+        }
         let e: Event = serde_json::from_slice(&payload).unwrap();
-        if e.id == id { n += 1; }
+        if e.id == id {
+            n += 1;
+        }
     }
 
     assert_eq!(n, 1);
