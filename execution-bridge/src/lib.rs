@@ -17,6 +17,10 @@ pub struct Bridge {
 }
 
 impl Bridge {
+    pub fn writer_mut(&mut self) -> &mut EventLogWriter {
+        &mut self.writer
+    }
+
     pub fn new(writer: EventLogWriter) -> Self {
         Self { writer, seen: HashSet::new() }
     }
