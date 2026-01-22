@@ -35,6 +35,7 @@ impl ExecOutbox for Bridge {
         let kind = "event";
         let ts_ns: u64 = ev.ts_proc.nanos.try_into()?;
         self.writer.append_bytes(kind, ts_ns, &payload)?;
+        self.writer.flush()?;
 
         Ok(())
     }
