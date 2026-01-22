@@ -4,5 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-el-core = { path = "../core" }
-el-exec = { path = "../exec" }
+el_core = { path = "../core" }
+exec = { path = "../exec" }
+
+[dev-dependencies]
+uuid = { version = "1", features = ["v4"] }
