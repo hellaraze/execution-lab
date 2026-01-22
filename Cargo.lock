@@ -22,6 +22,7 @@ dependencies = [
  "el_core",
  "eventlog",
  "exec",
+ "execution-bridge",
  "replay",
  "serde_json",
  "tokio",
