@@ -1,6 +1,6 @@
 use anyhow::Result;
 use el_core::event::ExecEvent;
-use el_eventlog::{EventLogWriter, EventId};
+use eventlog::{EventLogWriter, EventId};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct IdempotencyKey(pub EventId);

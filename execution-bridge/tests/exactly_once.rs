@@ -1,5 +1,5 @@
 use execution_bridge::*;
-use el_eventlog::mem::MemEventLog;
+use eventlog::mem::MemEventLog;
 
 #[test]
 fn exactly_once_append_is_idempotent() {
