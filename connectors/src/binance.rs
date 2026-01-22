@@ -62,6 +62,7 @@ async fn fetch_snapshot(symbol: &str, limit: u32) -> anyhow::Result<DepthSnapsho
     Ok(snap)
 }
 
+#[allow(dead_code)]
 fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, last_u: u64) -> anyhow::Result<()> {
     let now = now_nanos();
     let bids: Vec<(f64, f64)> = book.bids.iter().map(|(p,q)| (p.0, *q)).collect();
@@ -88,6 +89,7 @@ fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, la
     Ok(())
 }
 
+#[allow(dead_code)]
 fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, current_u: u64) -> anyhow::Result<()> {
     let now = now_nanos();
     let ev = Event {
@@ -110,6 +112,7 @@ fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, curre
     Ok(())
 }
 
+#[allow(dead_code)]
 fn emit_resync_started(writer: &mut EventLogWriter, symbol: &str, current_u: u64) -> anyhow::Result<()> {
     let now = now_nanos();
     let ev = Event {
