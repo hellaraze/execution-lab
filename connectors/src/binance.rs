@@ -1,3 +1,4 @@
+use execution_bridge::{Bridge, ExecOutbox};
 use el_core::event::{Event, EventPayload, EventType, Exchange};
 use el_core::time::{Timestamp, TimeSource};
 use el_core::instrument::InstrumentKey;
@@ -82,7 +83,7 @@ fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, la
         meta: HashMap::new(),
     };
 
-    writer.write(&ev)?;
+    outbox.writer_mut().write(&ev)?;
     
     Ok(())
 }
@@ -104,7 +105,7 @@ fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, curre
         payload: EventPayload::GapDetected { from, to },
         meta: HashMap::new(),
     };
-    writer.write(&ev)?;
+    outbox.writer_mut().write(&ev)?;
     
     Ok(())
 }
@@ -126,7 +127,7 @@ fn emit_resync_started(writer: &mut EventLogWriter, symbol: &str, current_u: u64
         payload: EventPayload::ResyncStarted,
         meta: HashMap::new(),
     };
-    writer.write(&ev)?;
+    outbox.writer_mut().write(&ev)?;
     
     Ok(())
 }
@@ -142,7 +143,7 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
     let mut last_u = snap.last_update_id;
 
     let mut outbox = Bridge::open_dedup(log_path, "binance", eventlog::writer::Durability::FsyncEvery { n: 1 })?;
-    emit_snapshot(&mut writer, &symbol.to_uppercase(), &book, last_u)?;
+    emit_snapshot(outbox.writer_mut(), &symbol.to_uppercase(), &book, last_u)?;
 
     // 2) diff stream
     let url = Url::parse(&format!(
@@ -193,7 +194,7 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
                 book.apply_levels(&bids, &asks);
                 last_u = snap.last_update_id;
 
-                emit_snapshot(&mut writer, &symbol.to_uppercase(), &book, last_u)?;
+                emit_snapshot(outbox.writer_mut(), &symbol.to_uppercase(), &book, last_u)?;
                 continue;
             } else {
                 // still not aligned; skip until aligned
@@ -203,8 +204,8 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
             // After sync: expect U == last_u + 1
             if d.first_update_id != last_u + 1 {
                 // gap/resync
-                emit_gap(&mut writer, &d.symbol, last_u + 1, d.first_update_id.saturating_sub(1), d.final_update_id)?;
-                emit_resync_started(&mut writer, &d.symbol, d.final_update_id)?;
+                emit_gap(outbox.writer_mut(), &d.symbol, last_u + 1, d.first_update_id.saturating_sub(1), d.final_update_id)?;
+                emit_resync_started(outbox.writer_mut(), &d.symbol, d.final_update_id)?;
 
                 // re-snapshot
                 let snap = fetch_snapshot(symbol, 1000).await?;
@@ -214,7 +215,7 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
                 book.apply_levels(&bids, &asks);
                 last_u = snap.last_update_id;
 
-                emit_snapshot(&mut writer, &symbol.to_uppercase(), &book, last_u)?;
+                emit_snapshot(outbox.writer_mut(), &symbol.to_uppercase(), &book, last_u)?;
                 in_sync = false;
                 continue;
             }
@@ -246,11 +247,11 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
             payload: EventPayload::BookDelta { bids, asks },
             meta: HashMap::new(),
         };
-        writer.write(&ev)?;
+        outbox.writer_mut().write(&ev)?;
 
         // Periodic checkpoint snapshot (every ~5s)
         if now - last_checkpoint_ns >= 5_000_000_000 {
-            emit_snapshot(&mut writer, &symbol.to_uppercase(), &book, last_u)?;
+            emit_snapshot(outbox.writer_mut(), &symbol.to_uppercase(), &book, last_u)?;
             last_checkpoint_ns = now;
         }
     
