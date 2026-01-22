@@ -8,10 +8,10 @@ fn mk_event(id: Uuid) -> Event {
         id,
         event_type: el_core::event::EventType::Connectivity,
         exchange: el_core::event::Exchange::Binance,
-        symbol: "TEST".into(),
+        symbol: "TEST",
         instrument: el_core::instrument::InstrumentKey::new(
             el_core::event::Exchange::Binance,
-            "TEST".into()
+            "TEST"
         ),
         ts_exchange: None,
         ts_recv: el_core::time::Timestamp::new(1, el_core::time::TimeSource::Receive),
