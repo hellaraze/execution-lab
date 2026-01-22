@@ -1,6 +1,6 @@
 use anyhow::Result;
-use el_core::event::ExecEvent;
-use eventlog::{EventLogWriter, EventId};
+use el_core::event::{ExecEvent, EventId};
+use eventlog::EventLogWriter;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct IdempotencyKey(pub EventId);
@@ -9,17 +9,17 @@ pub trait ExecOutbox {
     fn publish_once(&mut self, ev: ExecEvent) -> Result<()>;
 }
 
-pub struct Bridge<W: EventLogWriter> {
-    writer: W,
+pub struct Bridge {
+    writer: EventLogWriter,
 }
 
-impl<W: EventLogWriter> Bridge<W> {
-    pub fn new(writer: W) -> Self {
+impl Bridge {
+    pub fn new(writer: EventLogWriter) -> Self {
         Self { writer }
     }
 }
 
-impl<W: EventLogWriter> ExecOutbox for Bridge<W> {
+impl ExecOutbox for Bridge {
     fn publish_once(&mut self, ev: ExecEvent) -> Result<()> {
         // ЖБ-контракт:
         // - writer.append MUST be idempotent by EventId
