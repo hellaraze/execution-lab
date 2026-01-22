@@ -6,7 +6,6 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-execution-bridge = { path = "../execution-bridge" }
 
 connectors = { path = "../connectors" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
