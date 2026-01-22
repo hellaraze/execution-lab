@@ -6,6 +6,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+exec = { path = "../exec" }
 exec-bridge = { path = "../exec-bridge" }
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }
