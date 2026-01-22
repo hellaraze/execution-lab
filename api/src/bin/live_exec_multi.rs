@@ -1,7 +1,5 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use execution_bridge::Bridge;
-use execution_bridge::ExecOutbox;
 use eventlog::EventLogWriter;
 use exec::events::{ExecEvent, OrderId};
 use exec::order::snapshot::build_snapshot_multi;
@@ -18,8 +16,6 @@ fn main() -> anyhow::Result<()> {
     let _ = std::fs::remove_file(path);
 
     let w = EventLogWriter::open(path)?;
-    let mut outbox = Bridge::new(w);
-
     let btc = InstrumentKey::new("binance", "BTCUSDT");
     let eth = InstrumentKey::new("binance", "ETHUSDT");
 
