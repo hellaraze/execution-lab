@@ -14,8 +14,8 @@ fn mk_event(id: Uuid) -> Event {
             "TEST".into()
         ),
         ts_exchange: None,
-        ts_recv: el_core::time::Timestamp::now(el_core::time::TimeSource::Receive),
-        ts_proc: el_core::time::Timestamp::now(el_core::time::TimeSource::Process),
+        ts_recv: el_core::time::Timestamp::new(1, el_core::time::TimeSource::Receive),
+        ts_proc: el_core::time::Timestamp::new(2, el_core::time::TimeSource::Process),
         seq: None,
         schema_version: 1,
         integrity_flags: vec![],
