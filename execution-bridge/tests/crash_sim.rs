@@ -6,7 +6,7 @@ use uuid::Uuid;
 fn mk_event(id: Uuid) -> Event {
     Event {
         id,
-        event_type: el_core::event::EventType::Custom,
+        event_type: el_core::event::EventType::Connectivity,
         exchange: el_core::event::Exchange::Binance,
         symbol: "TEST".into(),
         instrument: el_core::instrument::InstrumentKey::new(
@@ -19,7 +19,7 @@ fn mk_event(id: Uuid) -> Event {
         seq: None,
         schema_version: 1,
         integrity_flags: vec![],
-        payload: el_core::event::EventPayload::Custom,
+        payload: el_core::event::EventPayload::Connectivity { status: "ok".into() },
         meta: Default::default(),
     }
 }
