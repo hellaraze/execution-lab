@@ -22,6 +22,39 @@ impl Bridge {
     }
 }
 
+
+impl Bridge {
+    pub fn open_dedup(
+        path: impl AsRef<std::path::Path>,
+        stream: &str,
+        durability: eventlog::writer::Durability,
+    ) -> anyhow::Result<Self> {
+        let path = path.as_ref();
+
+        // replay existing log to seed seen
+        let mut seen: std::collections::HashSet<el_core::event::EventId> =
+            std::collections::HashSet::new();
+
+        if path.exists() {
+            let mut r = eventlog::EventLogReader::open(path)?;
+            loop {
+                let (env, payload) = match r.next()? {
+                    Some(v) => v,
+                    None => break,
+                };
+                if env.kind != "event" {
+                    continue;
+                }
+                let e: el_core::event::Event = serde_json::from_slice(&payload)?;
+                seen.insert(e.id);
+            }
+        }
+
+        let writer = eventlog::EventLogWriter::open_append(path, stream.to_string(), durability)?;
+        Ok(Self { writer, seen })
+    }
+}
+
 impl ExecOutbox for Bridge {
         fn publish_once(&mut self, ev: Event) -> Result<()> {
         if !self.seen.insert(ev.id) {
