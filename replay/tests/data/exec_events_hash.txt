@@ -1,0 +1,3 @@
+# generated from replay/tests/data/exec_events.log
+# expected line format: EXEC n_total=... n_events=... n_instruments=... hash=...
+EXPECTED_HASH=17400048626915385767
