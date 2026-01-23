@@ -76,7 +76,7 @@ async fn main() -> Result<()> {
                 md.push_raw(raw, seq, ts_exchange_ms);
 
                 for ev in MarketDataAdapter::poll(&mut md) {
-                    if let el_contracts::v1::MdEvent::Bbo { instrument, bid_px, ask_px, ts: ts_ex, .. } = ev {
+                    if let el_contracts::v1::MdEvent::Bbo { instrument: _, bid_px, ask_px, ts: ts_ex, .. } = ev {
                         let now = now_nanos();
                         let sym = symbol.to_uppercase();
                         let core_ev = Event {
