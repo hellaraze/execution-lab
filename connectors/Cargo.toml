@@ -6,6 +6,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+el_contracts = { path = "../el_contracts" }
+adapters = { path = "../adapters" }
 execution-bridge = { path = "../execution-bridge" }
 
 el_core = { path = "../core" }
