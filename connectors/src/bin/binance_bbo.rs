@@ -78,13 +78,13 @@ async fn main() -> Result<()> {
                 for ev in MarketDataAdapter::poll(&mut md) {
                     if let el_contracts::v1::MdEvent::Bbo { instrument, bid_px, ask_px, ts: ts_ex, .. } = ev {
                         let now = now_nanos();
-                        let symbol = instrument.to_string(); // InstrumentKey Display should be stable; if not, we still store raw symbol below.
+                        let sym = symbol.to_uppercase();
                         let core_ev = Event {
                             id: Uuid::new_v4(),
                             event_type: EventType::TickerBbo,
                             exchange: Exchange::Binance,
-                            symbol: symbol.clone(),
-                            instrument: InstrumentKey::new(Exchange::Binance, symbol.clone()),
+                            symbol: sym.clone(),
+                            instrument: InstrumentKey::new(Exchange::Binance, sym.clone()),
                             ts_exchange: Some(ts_ex),
                             ts_recv: ts(now, TimeSource::Receive),
                             ts_proc: ts(now, TimeSource::Process),
