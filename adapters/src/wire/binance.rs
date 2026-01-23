@@ -3,8 +3,11 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
 struct BookTicker {
-    // Binance bookTicker fields:
-    // https://github.com/binance/binance-spot-api-docs/blob/master/web-socket-streams.md
+    // stream fields
+    #[serde(rename = "s")]
+    symbol: String,
+
+    // compact bookTicker fields
     #[serde(rename = "b")]
     bid_price: String,
     #[serde(rename = "B")]
@@ -29,6 +32,7 @@ pub fn map_raw_bbo(raw: &str, seq: u64, ts: u64) -> Option<WireEvent> {
         seq,
         ts_exchange: ts,
         payload: WirePayload::Bbo {
+            symbol: t.symbol,
             bid_px,
             bid_qty,
             ask_px,

@@ -13,6 +13,7 @@ pub enum WirePayload {
     Depth,
     Trade,
     Bbo {
+        symbol: String,
         bid_px: f64,
         bid_qty: f64,
         ask_px: f64,
