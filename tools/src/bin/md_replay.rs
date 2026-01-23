@@ -189,47 +189,21 @@ fn main() -> Result<()> {
                         if !ok {
                             mismatch += 1;
                             println!(
-                                "BBO_MISMATCH seq={:?} sym={} event_bid={} event_ask={} book_bid={} book_ask={}",
-                                e.seq, e.symbol, bid, ask, tb, ta
-                            );
-                            if mismatch >= max_mismatch {
-                                return Err(anyhow!(
-                                    "too many mismatches (>= {max_mismatch}); abort"
-                                ));
-                            }
-                        }
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-
-    let duration_ns = match (first_proc, last_proc) {
-        (Some(a), Some(b)) if b > a => Some((b - a) as u64),
-        _ => None,
-    };
-
-    let eps_per_sec = duration_ns
-        .map(|ns| ((n_snap + n_delta + n_bbo) as f64) / ((ns as f64) / 1e9))
-        .filter(|v| v.is_finite());
-
-    println!(
-        "OK replay tick={} window_ms={} mode={:?} snapshots={} deltas={} bbo={} mismatches={} last_bbo={:?} hash64={} eps={:?} compared={} skipped_window={} latency_raw_ns(min/avg/max)={:?}/{:?}/{:?} clock_offset_ns(avg)={:?}",
-        tick,
-        window_ms,
-        mode,
-        n_snap,
-        n_delta,
-        n_bbo,
-        mismatch,
-        last_bbo,
-        book.state_hash64(),
-        eps_per_sec,
-        if lat.n==0 { None } else { Some(lat.min) },
-        lat.avg(),
-        if lat.n==0 { None } else { Some(lat.max) },
-        offset.avg(),
+        "OK replay tick={tick} window_ms={window_ms} mode={mode:?} snapshots={n_snap} deltas={n_delta} bbo={n_bbo} mismatches={mismatch} compared={compared} skipped_window={skipped_window} last_bbo={last_bbo:?} hash64={hash64} eps={eps:?} latency_raw_ns={lat_raw:?} clock_offset_avg_ns={off_avg:?}",
+        tick = tick,
+        window_ms = window_ms,
+        mode = mode,
+        n_snap = n_snap,
+        n_delta = n_delta,
+        n_bbo = n_bbo,
+        mismatch = mismatch,
+        compared = compared,
+        skipped_window = skipped_window,
+        last_bbo = last_bbo,
+        hash64 = book.state_hash64(),
+        eps = eps_per_sec,
+        lat_raw = (if lat.n==0 { None } else { Some((lat.min, lat.avg(), lat.max)) }),
+        off_avg = offset.avg(),
     );
 
     Ok(())
