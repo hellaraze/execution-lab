@@ -8,6 +8,8 @@ version = "0.1.0"
 dependencies = [
  "el_contracts",
  "el_core",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -232,7 +234,6 @@ name = "connectors"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "el_contracts",
  "el_core",
  "eventlog",
  "execution-bridge",

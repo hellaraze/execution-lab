@@ -6,5 +6,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+serde_json = "1"
+serde = { version = "1", features = ["derive"] }
 el_core = { path = "../core" }
 el_contracts = { path = "../el_contracts" }

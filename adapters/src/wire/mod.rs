@@ -12,5 +12,10 @@ pub struct WireEvent {
 pub enum WirePayload {
     Depth,
     Trade,
-    Bbo,
+    Bbo {
+        bid_px: f64,
+        bid_qty: f64,
+        ask_px: f64,
+        ask_qty: f64,
+    },
 }
