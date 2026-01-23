@@ -63,6 +63,7 @@ fn main() -> Result<()> {
     let mut max_mismatch: u64 = 200;
     let mut eps: f64 = 1e-9;
     let mut tick: f64 = 0.01;
+    let mut window_ms: i64 = 250;
 
     while let Some(a) = args.next() {
         match a.as_str() {
@@ -86,6 +87,11 @@ fn main() -> Result<()> {
                     tick = v.parse().unwrap_or(tick);
                 }
             }
+            "--window-ms" => {
+                if let Some(v) = args.next() {
+                    window_ms = v.parse().unwrap_or(window_ms);
+                }
+            }
             _ => {}
         }
     }
@@ -107,6 +113,10 @@ fn main() -> Result<()> {
     let mut last_proc: Option<i64> = None;
 
     let mut lat = LatStats::default();
+    let mut offset = LatStats::default();
+    let mut last_book_ts_ex: Option<i64> = None;
+    let mut compared: u64 = 0;
+    let mut skipped_window: u64 = 0;
 
     loop {
         let Some((env, payload)) = r.next()? else {
@@ -123,6 +133,7 @@ fn main() -> Result<()> {
         if let Some(ts_ex) = e.ts_exchange {
             let d = e.ts_proc.nanos - ts_ex.nanos;
             lat.push(d);
+            offset.push(d);
         }
 
         match (&e.event_type, &e.payload) {
@@ -134,6 +145,9 @@ fn main() -> Result<()> {
                 book.apply_levels(bids, asks);
                 book.check_invariants().map_err(|x| anyhow!(x))?;
                 n_snap += 1;
+                if let Some(ts_ex) = e.ts_exchange {
+                    last_book_ts_ex = Some(ts_ex.nanos);
+                }
             }
             (EventType::BookDelta, EventPayload::BookDelta { bids, asks }) => {
                 if mode == Mode::Bbo {
@@ -142,6 +156,9 @@ fn main() -> Result<()> {
                 book.apply_levels(bids, asks);
                 book.check_invariants().map_err(|x| anyhow!(x))?;
                 n_delta += 1;
+                if let Some(ts_ex) = e.ts_exchange {
+                    last_book_ts_ex = Some(ts_ex.nanos);
+                }
             }
             (EventType::TickerBbo, EventPayload::TickerBbo { bid, ask }) => {
                 if mode == Mode::Depth {
@@ -151,6 +168,19 @@ fn main() -> Result<()> {
                 last_bbo = Some((*bid, *ask));
 
                 if mode == Mode::Compare {
+                    // gate: compare only when book is fresh vs bbo
+                    let bbo_ts = e.ts_exchange.map(|x| x.nanos);
+                    if let (Some(bt), Some(kt)) = (bbo_ts, last_book_ts_ex) {
+                        let dt_ns = (bt - kt).abs();
+                        if dt_ns > window_ms * 1_000_000 {
+                            skipped_window += 1;
+                            continue;
+                        }
+                    } else {
+                        skipped_window += 1;
+                        continue;
+                    }
+                    compared += 1;
                     let top_bid = book.top_bid().map(|(p, _q)| p);
                     let top_ask = book.top_ask().map(|(p, _q)| p);
 
@@ -185,8 +215,9 @@ fn main() -> Result<()> {
         .filter(|v| v.is_finite());
 
     println!(
-        "OK replay tick={} mode={:?} snapshots={} deltas={} bbo={} mismatches={} last_bbo={:?} hash64={} eps={:?} latency_ns(min/avg/max)={:?}/{:?}/{:?}",
+        "OK replay tick={} window_ms={} mode={:?} snapshots={} deltas={} bbo={} mismatches={} last_bbo={:?} hash64={} eps={:?} compared={} skipped_window={} latency_raw_ns(min/avg/max)={:?}/{:?}/{:?} clock_offset_ns(avg)={:?}",
         tick,
+        window_ms,
         mode,
         n_snap,
         n_delta,
@@ -198,6 +229,7 @@ fn main() -> Result<()> {
         if lat.n==0 { None } else { Some(lat.min) },
         lat.avg(),
         if lat.n==0 { None } else { Some(lat.max) },
+        offset.avg(),
     );
 
     Ok(())
