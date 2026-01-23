@@ -7,8 +7,8 @@ use crate::fsm::{OrderData, OrderEvent};
 pub struct Order {
     pub id: u64,
     pub data: OrderData,
-    fill_qty: HashMap<u64, u64>,
     seen_fills: HashSet<u64>,
+    fill_qty: HashMap<u64, u64>,
 }
 
 pub struct OrderStore {
@@ -20,36 +20,29 @@ impl OrderStore {
         Self { orders: HashMap::new() }
     }
 
-    pub fn get_or_create(&mut self, id: u64, total_atoms: u64) -> Result<&mut Order, ExecError> {
-        use std::collections::hash_map::Entry;
-
-        match self.orders.entry(id) {
-            Entry::Occupied(mut o) => {
-                if o.get().data.total_atoms != total_atoms {
-                    return Err(ExecError::ConfigMismatch);
-                }
-                Ok(o.into_mut())
-            }
-            Entry::Vacant(v) => Ok(v.insert(Order {
-                id,
-                data: OrderData::new(total_atoms),
-                fill_qty: HashMap::new(),
-                seen_fills: HashSet::new(),
-            })),
-        }
+    pub fn get_or_create(&mut self, id: u64, total_atoms: u64) -> &mut Order {
+        self.orders.entry(id).or_insert(Order {
+            id,
+            data: OrderData::new(total_atoms),
+            seen_fills: HashSet::new(),
+            fill_qty: HashMap::new(),
+        })
     }
 
     pub fn apply(&mut self, id: u64, ev: OrderEvent) -> Result<(), ExecError> {
-        let order = self.orders.get_mut(&id).ok_or(ExecError::NotFound)?;
+        let order = self.orders.get_mut(&id).ok_or(ExecError::InvalidTransition)?;
 
         if let OrderEvent::Fill { fill_id, qty_atoms } = &ev {
             if let Some(prev) = order.fill_qty.get(fill_id) {
                 if prev != qty_atoms {
                     return Err(ExecError::InvalidTransition);
                 }
+                // identical replay
                 return Ok(());
             }
             order.fill_qty.insert(*fill_id, *qty_atoms);
+
+            // also keep a set guard (belt + suspenders)
             order.seen_fills.insert(*fill_id);
         }
 
