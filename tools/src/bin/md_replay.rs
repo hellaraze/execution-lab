@@ -118,6 +118,7 @@ fn main() -> Result<()> {
 
     // compare gating
     let mut last_book_ts_ex: Option<i64> = None;
+    let mut last_book_proc_ns: Option<i64> = None;
     let mut compared: u64 = 0;
     let mut skipped_window: u64 = 0;
 
@@ -148,6 +149,7 @@ fn main() -> Result<()> {
                 book.apply_levels(bids, asks);
                 book.check_invariants().map_err(|x| anyhow!(x))?;
                 n_snap += 1;
+                last_book_proc_ns = Some(e.ts_proc.nanos);
 
                 if let Some(ts_ex) = e.ts_exchange {
                     last_book_ts_ex = Some(ts_ex.nanos);
@@ -160,6 +162,7 @@ fn main() -> Result<()> {
                 book.apply_levels(bids, asks);
                 book.check_invariants().map_err(|x| anyhow!(x))?;
                 n_delta += 1;
+                last_book_proc_ns = Some(e.ts_proc.nanos);
 
                 if let Some(ts_ex) = e.ts_exchange {
                     last_book_ts_ex = Some(ts_ex.nanos);
@@ -173,9 +176,8 @@ fn main() -> Result<()> {
                 last_bbo = Some((*bid, *ask));
 
                 if mode == Mode::Compare {
-                    let bbo_ts = e.ts_exchange.map(|x| x.nanos);
-                    if let (Some(bt), Some(kt)) = (bbo_ts, last_book_ts_ex) {
-                        let dt_ns = (bt - kt).abs();
+                    if let Some(ktp) = last_book_proc_ns {
+                        let dt_ns = (e.ts_proc.nanos - ktp).abs();
                         if dt_ns > window_ms * 1_000_000 {
                             skipped_window += 1;
                             continue;
