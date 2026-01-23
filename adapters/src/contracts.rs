@@ -6,7 +6,7 @@ use std::collections::VecDeque;
 
 use el_contracts::v1::{ExCommand, ExEvent, ExecutionAdapter, Health, MarketDataAdapter, MdEvent};
 use el_core::instrument::InstrumentKey;
-use el_core::time::Timestamp;
+use el_core::time::{TimeSource, Timestamp};
 
 use crate::wire;
 
@@ -73,7 +73,7 @@ impl BinanceMdAdapterBbo {
             {
                 self.q.push_back(MdEvent::Bbo {
                     instrument: self.instrument,
-                    ts: Timestamp::from_millis(ts_exchange_ms as i64),
+                    ts: (Timestamp::new((ts_exchange_ms as i64) * 1_000_000, TimeSource::Exchange)),
                     bid_px,
                     bid_qty,
                     ask_px,

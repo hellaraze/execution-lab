@@ -14,7 +14,7 @@ pub fn adapt(event: WireEvent) -> NormalizedEvent {
         kind: match event.payload {
             wire::WirePayload::Depth => NormalizedKind::Depth,
             wire::WirePayload::Trade => NormalizedKind::Trade,
-            wire::WirePayload::Bbo => NormalizedKind::Bbo,
+            wire::WirePayload::Bbo { .. } => NormalizedKind::Bbo,
         },
     }
 }
