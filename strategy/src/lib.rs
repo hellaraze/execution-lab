@@ -1,14 +1,23 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! Strategy crate
+//!
+//! Canonical rule: strategies must implement `el_contracts::v1::Strategy`
+//! and speak only in `MdEvent/ExEvent/ExCommand`.
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub use el_contracts::v1::{ExCommand, ExEvent, MdEvent, Rejection, RiskEngine, Side, Strategy};
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+/// Minimal no-op strategy example (kept tiny, serves as compile guard).
+pub struct NoopStrategy;
+
+impl Strategy for NoopStrategy {
+    fn name(&self) -> &'static str {
+        "noop"
+    }
+
+    fn on_md(&mut self, _ev: &MdEvent) -> Vec<ExCommand> {
+        Vec::new()
+    }
+
+    fn on_ex(&mut self, _ev: &ExEvent) -> Vec<ExCommand> {
+        Vec::new()
     }
 }
