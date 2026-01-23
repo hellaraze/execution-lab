@@ -76,7 +76,7 @@ async fn main() -> Result<()> {
                 md.push_raw(raw, seq, ts_exchange_ms);
 
                 for ev in MarketDataAdapter::poll(&mut md) {
-                    if let el_contracts::v1::MdEvent::Bbo { instrument, bid_px, ask_px, ts, .. } = ev {
+                    if let el_contracts::v1::MdEvent::Bbo { instrument, bid_px, ask_px, ts: ts_ex, .. } = ev {
                         let now = now_nanos();
                         let symbol = instrument.to_string(); // InstrumentKey Display should be stable; if not, we still store raw symbol below.
                         let core_ev = Event {
@@ -85,7 +85,7 @@ async fn main() -> Result<()> {
                             exchange: Exchange::Binance,
                             symbol: symbol.clone(),
                             instrument: InstrumentKey::new(Exchange::Binance, symbol.clone()),
-                            ts_exchange: Some(ts),
+                            ts_exchange: Some(ts_ex),
                             ts_recv: ts(now, TimeSource::Receive),
                             ts_proc: ts(now, TimeSource::Process),
                             seq: Some(seq),
