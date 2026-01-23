@@ -72,7 +72,7 @@ impl BinanceMdAdapterBbo {
             } = ev.payload
             {
                 self.q.push_back(MdEvent::Bbo {
-                    instrument: self.instrument,
+                    instrument: self.instrument.clone(),
                     ts: (Timestamp::new((ts_exchange_ms as i64) * 1_000_000, TimeSource::Exchange)),
                     bid_px,
                     bid_qty,
