@@ -14,3 +14,7 @@
 .env.*
 .idea
 .vscode
+
+# local artifacts
+var/
+*.eventlog
