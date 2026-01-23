@@ -1,5 +1,6 @@
 [workspace]
 members = [
+  "exec_engine",
   "core",
   "connectors",
   "orderbook",
@@ -9,7 +10,7 @@ members = [
   "risk",
   "exec",
   "strategy",
-  "api", "adapters",
+  "api", "adapters", "exec_engine",
   ]
 resolver = "2"
 
