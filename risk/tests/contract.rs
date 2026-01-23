@@ -1,19 +1,45 @@
+use el_contracts::v1::{ExCommand, RiskEngine as RiskEngineContract, Side};
 use risk::{RiskConfig, RiskEngine};
 
 #[test]
-fn default_cfg_is_unbounded() {
+fn risk_engine_implements_contract() {
     let cfg = RiskConfig::default();
-    assert!(cfg.max_pos.is_infinite());
-    assert!(cfg.max_notional.is_infinite());
+    let mut eng = RiskEngine::new(cfg);
+    let _name = RiskEngineContract::name(&eng);
+
+    // smoke: check accepts a basic command by default
+    let cmd = ExCommand::Place {
+        instrument: el_core::instrument::InstrumentKey::new(
+            el_core::exchange::Exchange::Binance,
+            "BTCUSDT",
+        ),
+        client_order_id: 1,
+        side: Side::Bid,
+        px: 100.0,
+        qty: 1.0,
+    };
+    let r = RiskEngineContract::check(&mut eng, &cmd);
+    assert!(r.is_ok());
 }
 
 #[test]
-fn engine_exposes_cfg() {
+fn max_order_notional_guard() {
     let cfg = RiskConfig {
-        max_pos: 1.0,
-        max_notional: 2.0,
+        max_order_notional: Some(50.0),
     };
-    let eng = RiskEngine::new(cfg.clone());
-    assert_eq!(eng.cfg().max_pos, cfg.max_pos);
-    assert_eq!(eng.cfg().max_notional, cfg.max_notional);
+    let mut eng = RiskEngine::new(cfg);
+
+    let cmd = ExCommand::Place {
+        instrument: el_core::instrument::InstrumentKey::new(
+            el_core::exchange::Exchange::Binance,
+            "BTCUSDT",
+        ),
+        client_order_id: 1,
+        side: Side::Bid,
+        px: 100.0,
+        qty: 1.0,
+    };
+
+    let r = RiskEngineContract::check(&mut eng, &cmd);
+    assert!(r.is_err());
 }

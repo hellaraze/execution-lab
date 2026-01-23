@@ -1,29 +1,26 @@
-use el_core::event::Event;
+//! Risk crate
+//!
+//! Canonical rule: risk engine implements `el_contracts::v1::RiskEngine` and gates `ExCommand`.
 
-#[derive(Debug, thiserror::Error)]
-pub enum RiskError {
-    #[error("position limit exceeded")]
-    PositionLimit,
-    #[error("notional limit exceeded")]
-    NotionalLimit,
-}
+use el_contracts::v1::{ExCommand, Rejection, RiskEngine as RiskEngineContract};
 
-#[derive(Clone, Debug)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RiskConfig {
-    pub max_pos: f64,
-    pub max_notional: f64,
+    /// Hard cap on order notional (px * qty). None = disabled.
+    pub max_order_notional: Option<f64>,
 }
 
 impl Default for RiskConfig {
     fn default() -> Self {
         Self {
-            max_pos: f64::INFINITY,
-            max_notional: f64::INFINITY,
+            max_order_notional: None,
         }
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct RiskEngine {
     cfg: RiskConfig,
 }
@@ -33,12 +30,28 @@ impl RiskEngine {
         Self { cfg }
     }
 
-    pub fn cfg(&self) -> &RiskConfig {
-        &self.cfg
+    fn check_internal(&mut self, cmd: &ExCommand) -> Result<(), String> {
+        if let Some(max) = self.cfg.max_order_notional {
+            match cmd {
+                ExCommand::Place { px, qty, .. } => {
+                    let notional = (*px) * (*qty);
+                    if notional > max {
+                        return Err(format!("max_order_notional exceeded: {notional} > {max}"));
+                    }
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+}
+
+impl RiskEngineContract for RiskEngine {
+    fn name(&self) -> &'static str {
+        "risk::RiskEngine(v1)"
     }
 
-    // Phase5 step 1: contract only. We will fold ExecEvents later.
-    pub fn check(&self, _event: &Event) -> Result<(), RiskError> {
-        Ok(())
+    fn check(&mut self, cmd: &ExCommand) -> Result<(), Rejection> {
+        self.check_internal(cmd).map_err(Rejection::Risk)
     }
 }
