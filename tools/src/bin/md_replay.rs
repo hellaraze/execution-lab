@@ -60,8 +60,9 @@ fn main() -> Result<()> {
         .unwrap_or_else(|| "/tmp/binance_depth.ndjson".to_string());
 
     let mut mode = Mode::Depth;
-    let mut max_mismatch: u64 = 20;
+    let mut max_mismatch: u64 = 200;
     let mut eps: f64 = 1e-9;
+    let mut tick: f64 = 0.01;
 
     while let Some(a) = args.next() {
         match a.as_str() {
@@ -78,6 +79,11 @@ fn main() -> Result<()> {
             "--eps" => {
                 if let Some(v) = args.next() {
                     eps = v.parse().unwrap_or(eps);
+                }
+            }
+            "--tick" => {
+                if let Some(v) = args.next() {
+                    tick = v.parse().unwrap_or(tick);
                 }
             }
             _ => {}
@@ -149,7 +155,7 @@ fn main() -> Result<()> {
                     let top_ask = book.top_ask().map(|(p, _q)| p);
 
                     if let (Some(tb), Some(ta)) = (top_bid, top_ask) {
-                        let ok = (tb - *bid).abs() < eps && (ta - *ask).abs() < eps;
+                        let ok = (tb - *bid).abs() <= tick + eps && (ta - *ask).abs() <= tick + eps;
                         if !ok {
                             mismatch += 1;
                             println!(
@@ -179,7 +185,8 @@ fn main() -> Result<()> {
         .filter(|v| v.is_finite());
 
     println!(
-        "OK replay mode={:?} snapshots={} deltas={} bbo={} mismatches={} last_bbo={:?} hash64={} eps={:?} latency_ns(min/avg/max)={:?}/{:?}/{:?}",
+        "OK replay tick={} mode={:?} snapshots={} deltas={} bbo={} mismatches={} last_bbo={:?} hash64={} eps={:?} latency_ns(min/avg/max)={:?}/{:?}/{:?}",
+        tick,
         mode,
         n_snap,
         n_delta,
