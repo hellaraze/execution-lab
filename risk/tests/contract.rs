@@ -1,4 +1,5 @@
 use el_contracts::v1::{ExCommand, RiskEngine as RiskEngineContract, Side};
+use el_core::event::Exchange;
 use risk::{RiskConfig, RiskEngine};
 
 #[test]
@@ -9,10 +10,7 @@ fn risk_engine_implements_contract() {
 
     // smoke: check accepts a basic command by default
     let cmd = ExCommand::Place {
-        instrument: el_core::instrument::InstrumentKey::new(
-            el_core::exchange::Exchange::Binance,
-            "BTCUSDT",
-        ),
+        instrument: el_core::instrument::InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
         client_order_id: 1,
         side: Side::Bid,
         px: 100.0,
@@ -30,10 +28,7 @@ fn max_order_notional_guard() {
     let mut eng = RiskEngine::new(cfg);
 
     let cmd = ExCommand::Place {
-        instrument: el_core::instrument::InstrumentKey::new(
-            el_core::exchange::Exchange::Binance,
-            "BTCUSDT",
-        ),
+        instrument: el_core::instrument::InstrumentKey::new(Exchange::Binance, "BTCUSDT"),
         client_order_id: 1,
         side: Side::Bid,
         px: 100.0,

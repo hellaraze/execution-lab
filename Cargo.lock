@@ -1437,6 +1437,7 @@ dependencies = [
 name = "risk"
 version = "0.1.0"
 dependencies = [
+ "el_contracts",
  "el_core",
  "serde",
  "thiserror 2.0.18",
