@@ -347,6 +347,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "el_contracts"
+version = "0.1.0"
+dependencies = [
+ "el_core",
+]
+
+[[package]]
 name = "el_core"
 version = "0.1.0"
 dependencies = [

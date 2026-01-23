@@ -14,7 +14,7 @@ members = [
   "adapters",
   "execution-bridge",
   "observability",
-  "audit",
+  "audit", "el_contracts",
 ]
 resolver = "2"
 
