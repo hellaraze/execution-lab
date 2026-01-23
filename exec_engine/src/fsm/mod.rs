@@ -36,11 +36,13 @@ impl OrderData {
 
 pub fn apply(data: &mut OrderData, ev: &OrderEvent) -> Result<(), ExecError> {
     match (&data.state, ev) {
+        // Accept only from New
         (OrderState::New, OrderEvent::Accept) => {
             data.state = OrderState::Open;
             Ok(())
         }
 
+        // Fill only from Open
         (OrderState::Open, OrderEvent::Fill { qty_atoms, .. }) => {
             if data.filled_atoms + qty_atoms > data.total_atoms {
                 return Err(ExecError::Overfill);
@@ -55,18 +57,22 @@ pub fn apply(data: &mut OrderData, ev: &OrderEvent) -> Result<(), ExecError> {
             Ok(())
         }
 
+        // No more fills after Filled
         (OrderState::Filled, OrderEvent::Fill { .. }) => Err(ExecError::AlreadyFilled),
 
-        (_, OrderEvent::Cancel) => {
+        // Cancel only from New or Open
+        (OrderState::New, OrderEvent::Cancel) | (OrderState::Open, OrderEvent::Cancel) => {
             data.state = OrderState::Canceled;
             Ok(())
         }
 
-        (_, OrderEvent::Reject) => {
+        // Reject only from New
+        (OrderState::New, OrderEvent::Reject) => {
             data.state = OrderState::Rejected;
             Ok(())
         }
 
+        // Everything else is invalid
         _ => Err(ExecError::InvalidTransition),
     }
 }
