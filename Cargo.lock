@@ -1994,6 +1994,7 @@ dependencies = [
  "anyhow",
  "el_core",
  "eventlog",
+ "orderbook",
  "serde_json",
 ]
 
