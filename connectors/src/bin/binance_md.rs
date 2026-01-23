@@ -41,7 +41,7 @@ struct DepthDiff {
     #[serde(rename = "E")]
     event_time_ms: u64,
     #[serde(rename = "s")]
-    symbol: String,
+    _symbol: String,
     #[serde(rename = "U")]
     first_update_id: u64,
     #[serde(rename = "u")]
@@ -57,7 +57,7 @@ struct BookTicker {
     #[serde(rename = "E")]
     event_time_ms: Option<u64>,
     #[serde(rename = "s")]
-    symbol: String,
+    _symbol: String,
     #[serde(rename = "b")]
     bid_price: String,
     #[serde(rename = "a")]
