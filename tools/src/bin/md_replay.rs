@@ -20,14 +20,14 @@ fn parse_mode(s: &str) -> Mode {
 }
 
 #[derive(Default)]
-struct LatStats {
+struct StatsI64 {
     n: u64,
     min: i64,
     max: i64,
     sum: i128,
 }
 
-impl LatStats {
+impl StatsI64 {
     fn push(&mut self, v: i64) {
         if self.n == 0 {
             self.min = v;
@@ -108,12 +108,15 @@ fn main() -> Result<()> {
 
     let mut last_bbo: Option<(f64, f64)> = None;
 
-    // perf/latency
+    // perf
     let mut first_proc: Option<i64> = None;
     let mut last_proc: Option<i64> = None;
 
-    let mut lat = LatStats::default();
-    let mut offset = LatStats::default();
+    // latency (raw proc - ex) and clock offset (same metric; we just report it)
+    let mut lat_raw = StatsI64::default();
+    let mut clock_offset = StatsI64::default();
+
+    // compare gating
     let mut last_book_ts_ex: Option<i64> = None;
     let mut compared: u64 = 0;
     let mut skipped_window: u64 = 0;
@@ -132,8 +135,8 @@ fn main() -> Result<()> {
 
         if let Some(ts_ex) = e.ts_exchange {
             let d = e.ts_proc.nanos - ts_ex.nanos;
-            lat.push(d);
-            offset.push(d);
+            lat_raw.push(d);
+            clock_offset.push(d);
         }
 
         match (&e.event_type, &e.payload) {
@@ -145,6 +148,7 @@ fn main() -> Result<()> {
                 book.apply_levels(bids, asks);
                 book.check_invariants().map_err(|x| anyhow!(x))?;
                 n_snap += 1;
+
                 if let Some(ts_ex) = e.ts_exchange {
                     last_book_ts_ex = Some(ts_ex.nanos);
                 }
@@ -156,6 +160,7 @@ fn main() -> Result<()> {
                 book.apply_levels(bids, asks);
                 book.check_invariants().map_err(|x| anyhow!(x))?;
                 n_delta += 1;
+
                 if let Some(ts_ex) = e.ts_exchange {
                     last_book_ts_ex = Some(ts_ex.nanos);
                 }
@@ -168,7 +173,6 @@ fn main() -> Result<()> {
                 last_bbo = Some((*bid, *ask));
 
                 if mode == Mode::Compare {
-                    // gate: compare only when book is fresh vs bbo
                     let bbo_ts = e.ts_exchange.map(|x| x.nanos);
                     if let (Some(bt), Some(kt)) = (bbo_ts, last_book_ts_ex) {
                         let dt_ns = (bt - kt).abs();
@@ -180,16 +184,51 @@ fn main() -> Result<()> {
                         skipped_window += 1;
                         continue;
                     }
-                    compared += 1;
+
                     let top_bid = book.top_bid().map(|(p, _q)| p);
                     let top_ask = book.top_ask().map(|(p, _q)| p);
 
                     if let (Some(tb), Some(ta)) = (top_bid, top_ask) {
+                        compared += 1;
                         let ok = (tb - *bid).abs() <= tick + eps && (ta - *ask).abs() <= tick + eps;
+
                         if !ok {
                             mismatch += 1;
                             println!(
-        "OK replay tick={tick} window_ms={window_ms} mode={mode:?} snapshots={n_snap} deltas={n_delta} bbo={n_bbo} mismatches={mismatch} compared={compared} skipped_window={skipped_window} last_bbo={last_bbo:?} hash64={hash64} eps={eps:?} latency_raw_ns={lat_raw:?} clock_offset_avg_ns={off_avg:?}",
+                                "BBO_MISMATCH seq={:?} sym={} event_bid={} event_ask={} book_bid={} book_ask={}",
+                                e.seq, e.symbol, bid, ask, tb, ta
+                            );
+                            if mismatch >= max_mismatch {
+                                return Err(anyhow!(
+                                    "too many mismatches (>= {max_mismatch}); abort"
+                                ));
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    let duration_ns = match (first_proc, last_proc) {
+        (Some(a), Some(b)) if b > a => Some((b - a) as u64),
+        _ => None,
+    };
+
+    let total_events = n_snap + n_delta + n_bbo;
+    let eps_per_sec = duration_ns
+        .map(|ns| (total_events as f64) / ((ns as f64) / 1e9))
+        .filter(|v| v.is_finite());
+
+    let lat_tuple = if lat_raw.n == 0 {
+        None
+    } else {
+        Some((lat_raw.min, lat_raw.avg(), lat_raw.max))
+    };
+
+    println!(
+        "OK replay tick={tick} window_ms={window_ms} mode={mode:?} snapshots={n_snap} deltas={n_delta} bbo={n_bbo} mismatches={mismatch} compared={compared} skipped_window={skipped_window} last_bbo={last_bbo:?} hash64={hash64} eps={eps:?} latency_raw_ns={lat:?} clock_offset_avg_ns={off:?}",
         tick = tick,
         window_ms = window_ms,
         mode = mode,
@@ -202,8 +241,8 @@ fn main() -> Result<()> {
         last_bbo = last_bbo,
         hash64 = book.state_hash64(),
         eps = eps_per_sec,
-        lat_raw = (if lat.n==0 { None } else { Some((lat.min, lat.avg(), lat.max)) }),
-        off_avg = offset.avg(),
+        lat = lat_tuple,
+        off = clock_offset.avg(),
     );
 
     Ok(())
