@@ -4,6 +4,9 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 struct BookTicker {
     // stream fields
+    #[serde(rename = "E")]
+    event_time_ms: Option<u64>,
+
     #[serde(rename = "s")]
     symbol: String,
 
@@ -27,10 +30,12 @@ pub fn map_raw_bbo(raw: &str, seq: u64, ts: u64) -> Option<WireEvent> {
     let ask_px: f64 = t.ask_price.parse().ok()?;
     let ask_qty: f64 = t.ask_qty.parse().ok()?;
 
+    let ts_exchange = t.event_time_ms.unwrap_or(ts);
+
     Some(WireEvent {
         source: "binance",
         seq,
-        ts_exchange: ts,
+        ts_exchange: ts_exchange,
         payload: WirePayload::Bbo {
             symbol: t.symbol,
             bid_px,

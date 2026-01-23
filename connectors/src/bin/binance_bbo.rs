@@ -71,7 +71,7 @@ async fn main() -> Result<()> {
                 // exchange timestamp not guaranteed in WS payload for bookTicker;
                 // use receive time as exchange for v1 until we wire E/event_time.
                 let recv_ns = now_nanos();
-                let ts_exchange_ms: u64 = (recv_ns as u64) / 1_000_000;
+                let ts_exchange_ms: u64 = 0;
 
                 md.push_raw(raw, seq, ts_exchange_ms);
 
