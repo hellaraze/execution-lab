@@ -5,6 +5,9 @@ version = 4
 [[package]]
 name = "adapters"
 version = "0.1.0"
+dependencies = [
+ "el_contracts",
+]
 
 [[package]]
 name = "ahash"
@@ -228,6 +231,7 @@ name = "connectors"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "el_contracts",
  "el_core",
  "eventlog",
  "execution-bridge",
