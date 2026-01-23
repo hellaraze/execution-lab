@@ -1,5 +1,5 @@
 use adapters::contracts::BinanceMdAdapterBbo;
-use el_contracts::v1::{MarketDataAdapter, MdEvent, Side};
+use el_contracts::v1::{MarketDataAdapter, MdEvent};
 use el_core::event::Exchange;
 use el_core::instrument::InstrumentKey;
 
