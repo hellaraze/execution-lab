@@ -16,3 +16,6 @@
 .vscode
 /var/
 *.eventlog
+!tools/tests/fixtures/
+!tools/tests/fixtures/*.eventlog
+!tools/tests/fixtures/*.log
