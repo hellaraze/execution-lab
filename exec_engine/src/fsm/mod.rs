@@ -57,10 +57,10 @@ pub fn apply(data: &mut OrderData, ev: &OrderEvent) -> Result<(), ExecError> {
             Ok(())
         }
 
-        // No more fills after Filled
+        // No fills after Filled
         (OrderState::Filled, OrderEvent::Fill { .. }) => Err(ExecError::AlreadyFilled),
 
-        // Cancel only from New or Open
+        // Cancel only from New/Open
         (OrderState::New, OrderEvent::Cancel) | (OrderState::Open, OrderEvent::Cancel) => {
             data.state = OrderState::Canceled;
             Ok(())
@@ -72,7 +72,6 @@ pub fn apply(data: &mut OrderData, ev: &OrderEvent) -> Result<(), ExecError> {
             Ok(())
         }
 
-        // Everything else is invalid
         _ => Err(ExecError::InvalidTransition),
     }
 }
