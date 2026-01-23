@@ -6,7 +6,7 @@ use exec_engine::error::ExecError;
 #[test]
 fn idempotent_fill() {
     let mut store = OrderStore::new();
-    let o = store.get_or_create(1, 100);
+    let o = store.get_or_create(1, 100).unwrap();
     assert_eq!(o.data.state, OrderState::New);
 
     store.apply(1, OrderEvent::Accept).unwrap();
@@ -14,7 +14,7 @@ fn idempotent_fill() {
     store.apply(1, OrderEvent::Fill { fill_id: 1, qty_atoms: 50 }).unwrap();
     store.apply(1, OrderEvent::Fill { fill_id: 1, qty_atoms: 50 }).unwrap(); // replay
 
-    let o = store.get_or_create(1, 100);
+    let o = store.get_or_create(1, 100).unwrap();
     assert_eq!(o.data.filled_atoms, 50);
 }
 
