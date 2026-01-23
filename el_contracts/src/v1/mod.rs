@@ -1,6 +1,7 @@
 //! PHASE A: Frozen contracts (ABI) for execution-lab.
 //!
 //! Rule: editing these is a BREAKING change. Extend via versioning.
+pub mod md;
 
 use el_core::instrument::InstrumentKey;
 use el_core::time::Timestamp;
@@ -22,14 +23,13 @@ pub enum Side {
 /// Normalized market data events (minimal v1).
 #[derive(Debug, Clone)]
 pub enum MdEvent {
-    Bbo {
-        instrument: InstrumentKey,
-        ts: Timestamp,
-        bid_px: f64,
-        bid_qty: f64,
-        ask_px: f64,
-        ask_qty: f64,
-    },
+    /// Canonical BBO snapshot (adapter-normalized).
+    Bbo(crate::v1::md::Bbo),
+
+    /// Canonical depth diff (adapter-normalized).
+    DepthDiff(crate::v1::md::DepthDiff),
+
+    /// Optional: normalized L2 delta (kept for future; unchanged).
     L2Delta {
         instrument: InstrumentKey,
         ts: Timestamp,
@@ -38,6 +38,8 @@ pub enum MdEvent {
         px: f64,
         qty: f64,
     },
+
+    /// Optional: normalized trades (kept for future; unchanged).
     Trade {
         instrument: InstrumentKey,
         ts: Timestamp,

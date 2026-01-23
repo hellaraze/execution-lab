@@ -15,6 +15,42 @@ use el_core::time::{TimeSource, Timestamp};
 
 use execution_bridge::{Bridge, ExecOutbox};
 
+#[derive(Debug, Deserialize)]
+struct WsDepthDiff {
+    #[serde(rename = "e")]
+    _event_type: String,
+    #[serde(rename = "E")]
+    event_time_ms: u64,
+    #[serde(rename = "s")]
+    symbol: String,
+    #[serde(rename = "U")]
+    first_update_id: u64,
+    #[serde(rename = "u")]
+    final_update_id: u64,
+    #[serde(rename = "b")]
+    bids: Vec<[String; 2]>,
+    #[serde(rename = "a")]
+    asks: Vec<[String; 2]>,
+}
+
+#[derive(Debug, Deserialize)]
+struct WsBookTicker {
+    #[serde(rename = "u")]
+    _update_id: u64,
+    #[serde(rename = "s")]
+    symbol: String,
+    #[serde(rename = "b")]
+    bid_price: String,
+    #[serde(rename = "B")]
+    _bid_qty: String,
+    #[serde(rename = "a")]
+    ask_price: String,
+    #[serde(rename = "A")]
+    _ask_qty: String,
+    // Some bookTicker payloads include E; if absent, your code may set None anyway.
+    #[serde(rename = "E")]
+    event_time_ms: Option<u64>,
+}
 fn now_nanos() -> i64 {
     OffsetDateTime::now_utc().unix_timestamp_nanos() as i64
 }
@@ -34,34 +70,6 @@ struct DepthSnapshot {
     last_update_id: u64,
     bids: Vec<[String; 2]>,
     asks: Vec<[String; 2]>,
-}
-
-#[derive(Debug, Deserialize)]
-struct DepthDiff {
-    #[serde(rename = "E")]
-    event_time_ms: u64,
-    #[serde(rename = "s")]
-    _symbol: String,
-    #[serde(rename = "U")]
-    first_update_id: u64,
-    #[serde(rename = "u")]
-    final_update_id: u64,
-    #[serde(rename = "b")]
-    bids: Vec<[String; 2]>,
-    #[serde(rename = "a")]
-    asks: Vec<[String; 2]>,
-}
-
-#[derive(Debug, Deserialize)]
-struct BookTicker {
-    #[serde(rename = "E")]
-    event_time_ms: Option<u64>,
-    #[serde(rename = "s")]
-    _symbol: String,
-    #[serde(rename = "b")]
-    bid_price: String,
-    #[serde(rename = "a")]
-    ask_price: String,
 }
 
 async fn fetch_snapshot(symbol: &str, limit: u32) -> anyhow::Result<DepthSnapshot> {
@@ -165,7 +173,7 @@ async fn main() -> Result<()> {
                 let msg = msg_res?;
                 if !msg.is_text() { continue; }
 
-                let d: DepthDiff = serde_json::from_str(msg.to_text()?)?;
+                let d: WsDepthDiff = serde_json::from_str(msg.to_text()?)?;
 
                 if !in_sync {
                     // First diff after snapshot must satisfy: U <= lastUpdateId+1 <= u
@@ -230,7 +238,7 @@ async fn main() -> Result<()> {
                 let msg = msg_res?;
                 if !msg.is_text() { continue; }
 
-                let t: BookTicker = serde_json::from_str(msg.to_text()?)?;
+                let t: WsBookTicker = serde_json::from_str(msg.to_text()?)?;
                 let bid: f64 = t.bid_price.parse().unwrap_or(0.0);
                 let ask: f64 = t.ask_price.parse().unwrap_or(0.0);
 

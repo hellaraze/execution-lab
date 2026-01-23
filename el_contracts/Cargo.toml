@@ -7,3 +7,4 @@ repository.workspace = true
 
 [dependencies]
 el_core = { path = "../core" }
+serde = { workspace = true, features = ["derive"] }

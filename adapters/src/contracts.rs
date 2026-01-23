@@ -4,6 +4,7 @@
 
 use std::collections::{HashMap, VecDeque};
 
+use el_contracts::v1::md;
 use el_contracts::v1::{ExCommand, ExEvent, ExecutionAdapter, Health, MarketDataAdapter, MdEvent};
 use el_core::event::Exchange;
 use el_core::instrument::InstrumentKey;
@@ -72,14 +73,14 @@ impl BinanceMdAdapterBbo {
                 ..
             } = ev.payload
             {
-                self.q.push_back(MdEvent::Bbo {
+                self.q.push_back(MdEvent::Bbo(md::Bbo {
                     instrument: self.instrument.clone(),
                     ts: Timestamp::new((ts_exchange_ms as i64) * 1_000_000, TimeSource::Exchange),
                     bid_px,
                     bid_qty,
                     ask_px,
                     ask_qty,
-                });
+                }));
                 self.last_seq = Some(seq);
             }
         }
@@ -138,14 +139,14 @@ impl BinanceMdMuxAdapterBbo {
 
         let instrument = InstrumentKey::new(Exchange::Binance, symbol.as_str());
 
-        self.q.push_back(MdEvent::Bbo {
+        self.q.push_back(MdEvent::Bbo(md::Bbo {
             instrument,
             ts: Timestamp::new((ts_exchange_ms as i64) * 1_000_000, TimeSource::Exchange),
             bid_px,
             bid_qty,
             ask_px,
             ask_qty,
-        });
+        }));
 
         self.last_seq.insert(symbol, seq);
     }
