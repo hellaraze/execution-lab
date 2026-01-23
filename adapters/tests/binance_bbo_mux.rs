@@ -25,7 +25,7 @@ fn mux_emits_multi_instrument_bbo_and_dedups_per_symbol() {
     let mut got = out
         .into_iter()
         .map(|e| match e {
-            MdEvent::Bbo { instrument, .. } => instrument,
+            MdEvent::Bbo(b) => b.instrument,
             _ => panic!("expected Bbo"),
         })
         .collect::<Vec<_>>();

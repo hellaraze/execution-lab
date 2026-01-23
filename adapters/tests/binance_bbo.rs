@@ -1,4 +1,5 @@
 use adapters::contracts::BinanceMdAdapterBbo;
+use el_contracts::v1::md;
 use el_contracts::v1::{MarketDataAdapter, MdEvent};
 use el_core::event::Exchange;
 use el_core::instrument::InstrumentKey;
@@ -16,14 +17,14 @@ fn binance_bookticker_maps_to_bbo() {
     assert_eq!(out.len(), 1);
 
     match out[0].clone() {
-        MdEvent::Bbo {
+        MdEvent::Bbo(md::Bbo {
             instrument: i,
             bid_px,
             bid_qty,
             ask_px,
             ask_qty,
             ..
-        } => {
+        }) => {
             assert_eq!(i, instrument);
             assert!((bid_px - 92499.29).abs() < 1e-9);
             assert!((bid_qty - 4.27501).abs() < 1e-9);

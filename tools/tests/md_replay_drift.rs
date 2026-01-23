@@ -26,7 +26,8 @@ fn find_value_span<'a>(line: &'a str, key: &str) -> Option<&'a str> {
 }
 
 fn parse_u64(v: &str) -> u64 {
-    v.parse::<u64>().unwrap_or_else(|e| panic!("bad u64 '{v}': {e}"))
+    v.parse::<u64>()
+        .unwrap_or_else(|e| panic!("bad u64 '{v}': {e}"))
 }
 
 fn parse_f64_opt(v: &str) -> Option<f64> {
@@ -37,7 +38,11 @@ fn parse_f64_opt(v: &str) -> Option<f64> {
         .strip_prefix("Some(")
         .and_then(|x| x.strip_suffix(')'))
         .unwrap_or_else(|| panic!("expected Some(..), got '{v}'"));
-    Some(inner.parse::<f64>().unwrap_or_else(|e| panic!("bad f64 '{inner}': {e}")))
+    Some(
+        inner
+            .parse::<f64>()
+            .unwrap_or_else(|e| panic!("bad f64 '{inner}': {e}")),
+    )
 }
 
 fn parse_f64_tuple_opt(v: &str) -> Option<(f64, f64, f64)> {
@@ -58,13 +63,19 @@ fn parse_f64_tuple_opt(v: &str) -> Option<(f64, f64, f64)> {
     let p1 = parts[1];
     let p2 = parts[2];
 
-    let min = p0.parse::<f64>().unwrap_or_else(|e| panic!("min bad '{p0}': {e}"));
+    let min = p0
+        .parse::<f64>()
+        .unwrap_or_else(|e| panic!("min bad '{p0}': {e}"));
     let avg_s = p1
         .strip_prefix("Some(")
         .and_then(|x| x.strip_suffix(')'))
         .unwrap_or_else(|| panic!("avg expected Some(..), got '{p1}'"));
-    let avg = avg_s.parse::<f64>().unwrap_or_else(|e| panic!("avg bad '{avg_s}': {e}"));
-    let max = p2.parse::<f64>().unwrap_or_else(|e| panic!("max bad '{p2}': {e}"));
+    let avg = avg_s
+        .parse::<f64>()
+        .unwrap_or_else(|e| panic!("avg bad '{avg_s}': {e}"));
+    let max = p2
+        .parse::<f64>()
+        .unwrap_or_else(|e| panic!("max bad '{p2}': {e}"));
 
     Some((min, avg, max))
 }
@@ -123,7 +134,8 @@ fn md_replay_drift_fixture_invariants_locked() {
     let p50 = parse_f64_opt(find_value_span(ok, "drift_ticks_p50=").expect("p50"));
     let p90 = parse_f64_opt(find_value_span(ok, "drift_ticks_p90=").expect("p90")).expect("p90");
     let p99 = parse_f64_opt(find_value_span(ok, "drift_ticks_p99=").expect("p99")).expect("p99");
-    let p999 = parse_f64_opt(find_value_span(ok, "drift_ticks_p999=").expect("p999")).expect("p999");
+    let p999 =
+        parse_f64_opt(find_value_span(ok, "drift_ticks_p999=").expect("p999")).expect("p999");
 
     assert_eq!(p50, Some(0.0), "p50 not zero: {ok}");
 
