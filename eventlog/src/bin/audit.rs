@@ -10,7 +10,7 @@ fn main() -> Result<()> {
     let mut n = 0u64;
     let mut last_seq: Option<u64> = None;
 
-    while let Some((env, _payload)) = r.next()? {
+    while let Some((env, _payload)) = r.read_next()? {
         if let Some(prev) = last_seq {
             if env.seq != prev + 1 {
                 anyhow::bail!(

@@ -1,9 +1,9 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use adapters::{SeqTracker, AdapterSignal};
-use eventlog::{EventLogReader, EventLogWriter};
+use adapters::{AdapterSignal, SeqTracker};
 use eventlog::hash::stable_hash;
 use eventlog::snapshot::Snapshot;
+use eventlog::{EventLogReader, EventLogWriter};
 use replay::ReplayGuard;
 
 fn now_ns() -> u64 {
@@ -71,7 +71,7 @@ fn main() -> anyhow::Result<()> {
     let mut replay_guard = ReplayGuard::new();
     let mut replay_state: u64 = 0;
 
-    while let Some((env, payload)) = r.next()? {
+    while let Some((env, payload)) = r.read_next()? {
         replay_guard.on_kind(&env.kind);
 
         if env.kind == "snapshot" {

@@ -19,7 +19,9 @@ pub struct OrderStore {
 
 impl OrderStore {
     pub fn new() -> Self {
-        Self { orders: HashMap::new() }
+        Self {
+            orders: HashMap::new(),
+        }
     }
 
     pub fn get_or_create(&mut self, id: u64, total_atoms: u64) -> Result<&mut Order, ExecError> {
@@ -124,5 +126,11 @@ impl OrderStore {
         let mut h = Sha256::new();
         h.update(json.as_bytes());
         Ok(format!("{:x}", h.finalize()))
+    }
+}
+
+impl Default for OrderStore {
+    fn default() -> Self {
+        Self::new()
     }
 }

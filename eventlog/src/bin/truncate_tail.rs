@@ -4,7 +4,9 @@ use std::io::{BufRead, BufReader, Seek, SeekFrom};
 use std::path::Path;
 
 fn find_last_good_offset(path: impl AsRef<Path>) -> Result<(u64, u64)> {
-    let file = OpenOptions::new().read(true).open(path.as_ref())
+    let file = OpenOptions::new()
+        .read(true)
+        .open(path.as_ref())
         .with_context(|| format!("open {:?}", path.as_ref()))?;
     let mut reader = BufReader::new(file);
 
@@ -16,7 +18,9 @@ fn find_last_good_offset(path: impl AsRef<Path>) -> Result<(u64, u64)> {
     loop {
         line.clear();
         let bytes = reader.read_line(&mut line)?;
-        if bytes == 0 { break; }
+        if bytes == 0 {
+            break;
+        }
 
         let trimmed = line.trim_end();
         match serde_json::from_str::<eventlog::envelope::EventEnvelope>(trimmed) {
@@ -42,7 +46,9 @@ fn main() -> Result<()> {
         .unwrap_or_else(|| "/tmp/el_test.log".to_string());
 
     let (good_off, last_seq) = find_last_good_offset(&path)?;
-    let mut f = OpenOptions::new().write(true).open(&path)
+    let mut f = OpenOptions::new()
+        .write(true)
+        .open(&path)
         .with_context(|| format!("open for write {:?}", path))?;
 
     let len = f.metadata()?.len();
@@ -51,7 +57,10 @@ fn main() -> Result<()> {
         f.set_len(good_off).context("set_len")?;
         f.seek(SeekFrom::End(0)).ok();
     } else {
-        eprintln!("OK: no truncate needed (len={}, last_seq={})", len, last_seq);
+        eprintln!(
+            "OK: no truncate needed (len={}, last_seq={})",
+            len, last_seq
+        );
     }
 
     Ok(())

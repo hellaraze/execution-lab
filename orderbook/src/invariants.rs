@@ -71,3 +71,9 @@ impl Invariant<OrderBook> for NoCross {
         Ok(())
     }
 }
+
+impl<S> Default for InvariantSet<S> {
+    fn default() -> Self {
+        Self::new()
+    }
+}

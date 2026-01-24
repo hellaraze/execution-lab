@@ -23,3 +23,9 @@ impl ExecGuard {
         self.replay.on_snapshot();
     }
 }
+
+impl Default for ExecGuard {
+    fn default() -> Self {
+        Self::new()
+    }
+}

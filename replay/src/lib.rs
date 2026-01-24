@@ -1,7 +1,7 @@
-pub mod state;
-pub mod wire;
 pub mod decode;
 pub mod quality;
+pub mod state;
+pub mod wire;
 
 use state::ReplayHealth;
 
@@ -11,7 +11,9 @@ pub struct ReplayGuard {
 
 impl ReplayGuard {
     pub fn new() -> Self {
-        Self { health: ReplayHealth::Healthy }
+        Self {
+            health: ReplayHealth::Healthy,
+        }
     }
 
     pub fn on_adapter_signal(&mut self) {
@@ -32,5 +34,11 @@ impl ReplayGuard {
         if kind == "snapshot" {
             self.on_snapshot();
         }
+    }
+}
+
+impl Default for ReplayGuard {
+    fn default() -> Self {
+        Self::new()
     }
 }

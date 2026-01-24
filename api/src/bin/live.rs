@@ -1,6 +1,6 @@
-use adapters::{SeqTracker, AdapterSignal};
-use exec::guard::ExecGuard;
+use adapters::{AdapterSignal, SeqTracker};
 use eventlog::snapshot::Snapshot;
+use exec::guard::ExecGuard;
 
 /// Replay-driven Live Loop (skeleton).
 /// Invariant: live_state_hash == replay_state_hash, иначе PANIC/HALT.

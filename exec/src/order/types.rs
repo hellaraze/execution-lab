@@ -30,3 +30,9 @@ impl OrderView {
         }
     }
 }
+
+impl Default for OrderView {
+    fn default() -> Self {
+        Self::new()
+    }
+}

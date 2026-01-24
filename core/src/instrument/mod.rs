@@ -14,7 +14,10 @@ pub struct InstrumentKey {
 
 impl InstrumentKey {
     pub fn new(exchange: Exchange, symbol: impl Into<String>) -> Self {
-        Self { exchange, symbol: Symbol(symbol.into()) }
+        Self {
+            exchange,
+            symbol: Symbol(symbol.into()),
+        }
     }
 }
 

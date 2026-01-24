@@ -22,7 +22,8 @@ fn main() -> Result<()> {
         .and_then(|s| s.parse().ok())
         .unwrap_or(200);
 
-    let mut r = EventLogReader::open(&log_path).with_context(|| format!("open log: {}", log_path))?;
+    let mut r =
+        EventLogReader::open(&log_path).with_context(|| format!("open log: {}", log_path))?;
     let mut book = OrderBook::new();
 
     let mut prev_chain: u64 = 0;
@@ -30,17 +31,17 @@ fn main() -> Result<()> {
 
     println!("# chain hashes generated from: {}", log_path);
 
-    while let Some((env, payload_bytes)) = r.next()? {
+    while let Some((env, payload_bytes)) = r.read_next()? {
         let ev: Event = serde_json::from_slice(&payload_bytes)
             .with_context(|| format!("parse core::Event json (seq={})", env.seq))?;
 
         match (&ev.event_type, &ev.payload) {
             (EventType::BookSnapshot, EventPayload::BookSnapshot { bids, asks }) => {
                 book = OrderBook::new();
-                book.apply_levels(&bids, &asks);
+                book.apply_levels(bids, asks);
             }
             (EventType::BookDelta, EventPayload::BookDelta { bids, asks }) => {
-                book.apply_levels(&bids, &asks);
+                book.apply_levels(bids, asks);
             }
             _ => {}
         }

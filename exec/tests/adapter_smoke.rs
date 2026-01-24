@@ -1,8 +1,8 @@
-use exec::adapter::{ExecAdapter, PlaceOrder, Side};
-use exec::mock_adapter::MockAdapter;
-use el_core::instrument::InstrumentKey;
-use exec::events::OrderId;
 use el_core::event::Exchange;
+use el_core::instrument::InstrumentKey;
+use exec::adapter::{ExecAdapter, PlaceOrder, Side};
+use exec::events::OrderId;
+use exec::mock_adapter::MockAdapter;
 
 #[test]
 fn mock_adapter_accepts_order() {

@@ -17,3 +17,7 @@ blake3 = "1"
 serde_json = "1"
 uuid = { version = "1", features = ["v4","v5"] }
 rand = "0.8"
+
+[dev-dependencies]
+exec = { path = "../exec" }
+exec_engine = { path = "../exec_engine" }

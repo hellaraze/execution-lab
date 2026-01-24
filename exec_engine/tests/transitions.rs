@@ -1,5 +1,5 @@
-use exec_engine::fsm::{apply, OrderData, OrderEvent, OrderState};
 use exec_engine::error::ExecError;
+use exec_engine::fsm::{apply, OrderData, OrderEvent, OrderState};
 
 #[test]
 fn accept_only_from_new() {
@@ -36,7 +36,14 @@ fn cancel_only_from_new_or_open() {
 
     let mut d3 = OrderData::new(10);
     apply(&mut d3, &OrderEvent::Accept).unwrap();
-    apply(&mut d3, &OrderEvent::Fill { fill_id: 1, qty_atoms: 10 }).unwrap();
+    apply(
+        &mut d3,
+        &OrderEvent::Fill {
+            fill_id: 1,
+            qty_atoms: 10,
+        },
+    )
+    .unwrap();
     assert_eq!(d3.state, OrderState::Filled);
     let err = apply(&mut d3, &OrderEvent::Cancel);
     assert_eq!(err, Err(ExecError::InvalidTransition));

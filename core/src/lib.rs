@@ -1,4 +1,4 @@
-pub mod instrument;
-pub mod event;
-pub mod time;
 pub mod error;
+pub mod event;
+pub mod instrument;
+pub mod time;

@@ -12,7 +12,7 @@ fn main() -> anyhow::Result<()> {
     let mut guard = ReplayGuard::new();
     let mut snap_hash: Option<u64> = None;
 
-    while let Some((env, payload)) = r.next()? {
+    while let Some((env, payload)) = r.read_next()? {
         guard.on_kind(&env.kind);
 
         if env.kind == "snapshot_hash" {
@@ -37,13 +37,21 @@ fn main() -> anyhow::Result<()> {
     }
 
     // ЛОМАЕМ replay: добавляем лишнее событие
-    events.push(ExecEvent::OrderRejected { instrument: exec::util::instrument::InstrumentKey::new("binance","BTCUSDT"), id: OrderId(1), reason: "boom".to_string() });
+    events.push(ExecEvent::OrderRejected {
+        instrument: exec::util::instrument::InstrumentKey::new("binance", "BTCUSDT"),
+        id: OrderId(1),
+        reason: "boom".to_string(),
+    });
 
-    let (_store, replay_hash) = build_snapshot(&events).map_err(|e| anyhow::anyhow!(e.to_string()))?;
+    let (_store, replay_hash) =
+        build_snapshot(&events).map_err(|e| anyhow::anyhow!(e.to_string()))?;
     let snap_hash = snap_hash.expect("snapshot_hash must exist");
 
     if snap_hash != replay_hash {
-        panic!("EXEC HASH MISMATCH: snapshot_hash={} replay={}", snap_hash, replay_hash);
+        panic!(
+            "EXEC HASH MISMATCH: snapshot_hash={} replay={}",
+            snap_hash, replay_hash
+        );
     }
 
     Ok(())

@@ -8,6 +8,9 @@ pub struct OrderEvent {
 
 impl OrderEvent {
     pub fn new(event_type: EventType, payload: EventPayload) -> Self {
-        Self { event_type, payload }
+        Self {
+            event_type,
+            payload,
+        }
     }
 }

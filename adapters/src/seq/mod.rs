@@ -39,3 +39,9 @@ impl SeqTracker {
         self.last = Some(last_seq);
     }
 }
+
+impl Default for SeqTracker {
+    fn default() -> Self {
+        Self::new()
+    }
+}

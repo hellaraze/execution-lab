@@ -8,11 +8,25 @@ fn basic_flow() {
     apply(&mut d, &OrderEvent::Accept).unwrap();
     assert_eq!(d.state, OrderState::Open);
 
-    apply(&mut d, &OrderEvent::Fill { fill_id: 1, qty_atoms: 40 }).unwrap();
+    apply(
+        &mut d,
+        &OrderEvent::Fill {
+            fill_id: 1,
+            qty_atoms: 40,
+        },
+    )
+    .unwrap();
     assert_eq!(d.filled_atoms, 40);
     assert_eq!(d.state, OrderState::Open);
 
-    apply(&mut d, &OrderEvent::Fill { fill_id: 2, qty_atoms: 60 }).unwrap();
+    apply(
+        &mut d,
+        &OrderEvent::Fill {
+            fill_id: 2,
+            qty_atoms: 60,
+        },
+    )
+    .unwrap();
     assert_eq!(d.filled_atoms, 100);
     assert_eq!(d.state, OrderState::Filled);
 }

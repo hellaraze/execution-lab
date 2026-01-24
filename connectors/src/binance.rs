@@ -1,6 +1,6 @@
 use el_core::event::{Event, EventPayload, EventType, Exchange};
-use el_core::time::{Timestamp, TimeSource};
 use el_core::instrument::InstrumentKey;
+use el_core::time::{TimeSource, Timestamp};
 use eventlog::writer::EventLogWriter;
 use futures_util::StreamExt;
 use orderbook::OrderBook;
@@ -57,14 +57,24 @@ async fn fetch_snapshot(symbol: &str, limit: u32) -> anyhow::Result<DepthSnapsho
         limit
     );
 
-    let snap = reqwest::Client::new().get(url).send().await?.json::<DepthSnapshot>().await?;
+    let snap = reqwest::Client::new()
+        .get(url)
+        .send()
+        .await?
+        .json::<DepthSnapshot>()
+        .await?;
     Ok(snap)
 }
 
-fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, last_u: u64) -> anyhow::Result<()> {
+fn emit_snapshot(
+    writer: &mut EventLogWriter,
+    symbol: &str,
+    book: &OrderBook,
+    last_u: u64,
+) -> anyhow::Result<()> {
     let now = now_nanos();
-    let bids: Vec<(f64, f64)> = book.bids.iter().map(|(p,q)| (p.0, *q)).collect();
-    let asks: Vec<(f64, f64)> = book.asks.iter().map(|(p,q)| (p.0, *q)).collect();
+    let bids: Vec<(f64, f64)> = book.bids.iter().map(|(p, q)| (p.0, *q)).collect();
+    let asks: Vec<(f64, f64)> = book.asks.iter().map(|(p, q)| (p.0, *q)).collect();
 
     let ev = Event {
         id: Uuid::new_v4(),
@@ -86,7 +96,13 @@ fn emit_snapshot(writer: &mut EventLogWriter, symbol: &str, book: &OrderBook, la
     Ok(())
 }
 
-fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, current_u: u64) -> anyhow::Result<()> {
+fn emit_gap(
+    writer: &mut EventLogWriter,
+    symbol: &str,
+    from: u64,
+    to: u64,
+    current_u: u64,
+) -> anyhow::Result<()> {
     let now = now_nanos();
     let ev = Event {
         id: Uuid::new_v4(),
@@ -107,7 +123,11 @@ fn emit_gap(writer: &mut EventLogWriter, symbol: &str, from: u64, to: u64, curre
     Ok(())
 }
 
-fn emit_resync_started(writer: &mut EventLogWriter, symbol: &str, current_u: u64) -> anyhow::Result<()> {
+fn emit_resync_started(
+    writer: &mut EventLogWriter,
+    symbol: &str,
+    current_u: u64,
+) -> anyhow::Result<()> {
     let now = now_nanos();
     let ev = Event {
         id: Uuid::new_v4(),
@@ -132,8 +152,16 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
     // 1) snapshot
     let snap = fetch_snapshot(symbol, 1000).await?;
     let mut book = OrderBook::new();
-    let bids = snap.bids.into_iter().map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0))).collect::<Vec<_>>();
-    let asks = snap.asks.into_iter().map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0))).collect::<Vec<_>>();
+    let bids = snap
+        .bids
+        .into_iter()
+        .map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0)))
+        .collect::<Vec<_>>();
+    let asks = snap
+        .asks
+        .into_iter()
+        .map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0)))
+        .collect::<Vec<_>>();
     book.apply_levels(&bids, &asks);
 
     let mut last_u = snap.last_update_id;
@@ -155,14 +183,17 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
 
     while let Some(msg) = read.next().await {
         let msg = msg?;
-        if !msg.is_text() { continue; }
+        if !msg.is_text() {
+            continue;
+        }
 
         let d: DepthDiff = serde_json::from_str(msg.to_text()?)?;
 
         // Binance sync rules:
         // First diff after snapshot must satisfy: U <= lastUpdateId+1 <= u
         if !in_sync {
-            if d.first_update_id <= last_u + 1 && last_u + 1 <= d.final_update_id {
+            let next_u = last_u + 1;
+            if d.first_update_id <= next_u && next_u <= d.final_update_id {
                 in_sync = true;
             } else {
                 // still not aligned; skip until aligned
@@ -172,14 +203,28 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
             // After sync: expect U == last_u + 1
             if d.first_update_id != last_u + 1 {
                 // gap/resync
-                emit_gap(&mut writer, &d.symbol, last_u + 1, d.first_update_id.saturating_sub(1), d.final_update_id)?;
+                emit_gap(
+                    &mut writer,
+                    &d.symbol,
+                    last_u + 1,
+                    d.first_update_id.saturating_sub(1),
+                    d.final_update_id,
+                )?;
                 emit_resync_started(&mut writer, &d.symbol, d.final_update_id)?;
 
                 // re-snapshot
                 let snap = fetch_snapshot(symbol, 1000).await?;
                 book = OrderBook::new();
-                let bids = snap.bids.into_iter().map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0))).collect::<Vec<_>>();
-                let asks = snap.asks.into_iter().map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0))).collect::<Vec<_>>();
+                let bids = snap
+                    .bids
+                    .into_iter()
+                    .map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0)))
+                    .collect::<Vec<_>>();
+                let asks = snap
+                    .asks
+                    .into_iter()
+                    .map(|x| (x[0].parse().unwrap_or(0.0), x[1].parse().unwrap_or(0.0)))
+                    .collect::<Vec<_>>();
                 book.apply_levels(&bids, &asks);
                 last_u = snap.last_update_id;
 
@@ -205,7 +250,10 @@ pub async fn run_depth_reconstructed(symbol: &str, log_path: &str) -> anyhow::Re
             symbol: d.symbol.clone(),
             instrument: InstrumentKey::new(Exchange::Binance, d.symbol.clone()),
 
-            ts_exchange: Some(ts((d.event_time_ms as i64) * 1_000_000, TimeSource::Exchange)),
+            ts_exchange: Some(ts(
+                (d.event_time_ms as i64) * 1_000_000,
+                TimeSource::Exchange,
+            )),
             ts_recv: ts(now, TimeSource::Receive),
             ts_proc: ts(now, TimeSource::Process),
 

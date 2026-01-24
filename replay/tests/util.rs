@@ -22,24 +22,33 @@ pub fn run_and_collect_chain_hashes(path: &str, max_events: usize) -> Result<Vec
     let mut n: usize = 0;
     let mut last_env_seq: Option<u64> = None;
 
-    while let Some((env, payload_bytes)) = r.next()? {
+    while let Some((env, payload_bytes)) = r.read_next()? {
         if let Some(prev) = last_env_seq {
             if env.seq != prev + 1 {
-                anyhow::bail!("GAP DETECTED: missing envelope seqs {}..{}", prev + 1, env.seq - 1);
+                anyhow::bail!(
+                    "GAP DETECTED: missing envelope seqs {}..{}",
+                    prev + 1,
+                    env.seq - 1
+                );
             }
         }
         last_env_seq = Some(env.seq);
 
-        let ev: Event = serde_json::from_slice(&payload_bytes)
-            .with_context(|| format!("parse core::Event json (step={} env.seq={})", n + 1, env.seq))?;
+        let ev: Event = serde_json::from_slice(&payload_bytes).with_context(|| {
+            format!(
+                "parse core::Event json (step={} env.seq={})",
+                n + 1,
+                env.seq
+            )
+        })?;
 
         match (&ev.event_type, &ev.payload) {
             (EventType::BookSnapshot, EventPayload::BookSnapshot { bids, asks }) => {
                 book = OrderBook::new();
-                book.apply_levels(&bids, &asks);
+                book.apply_levels(bids, asks);
             }
             (EventType::BookDelta, EventPayload::BookDelta { bids, asks }) => {
-                book.apply_levels(&bids, &asks);
+                book.apply_levels(bids, asks);
             }
             _ => {}
         }

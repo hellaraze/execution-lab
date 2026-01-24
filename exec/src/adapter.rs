@@ -1,5 +1,5 @@
-use el_core::instrument::InstrumentKey;
 use crate::events::OrderId;
+use el_core::instrument::InstrumentKey;
 type Price = f64;
 type Qty = f64;
 

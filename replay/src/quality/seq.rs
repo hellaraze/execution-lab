@@ -32,7 +32,9 @@ pub struct SeqTracker {
 
 impl SeqTracker {
     pub fn new() -> Self {
-        Self { last: HashMap::new() }
+        Self {
+            last: HashMap::new(),
+        }
     }
 
     /// Update tracker with an event.
@@ -69,7 +71,10 @@ impl SeqTracker {
                 self.last.insert(key, curr);
 
                 if curr > prev + 1 {
-                    Ok(Some(Gap { from: prev + 1, to: curr - 1 }))
+                    Ok(Some(Gap {
+                        from: prev + 1,
+                        to: curr - 1,
+                    }))
                 } else {
                     Ok(None)
                 }

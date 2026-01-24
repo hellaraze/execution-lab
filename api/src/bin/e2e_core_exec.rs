@@ -4,11 +4,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
 use el_core::event::{Event, EventPayload, EventType, Exchange};
-use el_core::time::{Timestamp, TimeSource};
+use el_core::time::{TimeSource, Timestamp};
 
+use exec::events::ExecEvent;
 use exec::order::bridge::to_exec_event;
 use exec::order::snapshot::build_snapshot;
-use exec::events::ExecEvent;
 
 use eventlog::EventLogWriter;
 

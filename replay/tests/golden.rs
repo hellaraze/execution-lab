@@ -10,7 +10,9 @@ fn parse_expected(path: &str) -> Result<Vec<u64>> {
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
-        let x: u64 = line.parse().with_context(|| format!("parse u64 at line {}", i + 1))?;
+        let x: u64 = line
+            .parse()
+            .with_context(|| format!("parse u64 at line {}", i + 1))?;
         v.push(x);
     }
     Ok(v)

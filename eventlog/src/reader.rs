@@ -4,8 +4,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 
-use base64::Engine;
 use crate::envelope::EventEnvelope;
+use base64::Engine;
 
 fn crc32(bytes: &[u8]) -> u32 {
     let mut h = Hasher::new();
@@ -20,15 +20,15 @@ pub struct EventLogReader {
 
 impl EventLogReader {
     pub fn open(path: impl AsRef<Path>) -> Result<Self> {
-        let file = File::open(path.as_ref())
-            .with_context(|| format!("open {:?}", path.as_ref()))?;
+        let file =
+            File::open(path.as_ref()).with_context(|| format!("open {:?}", path.as_ref()))?;
         Ok(Self {
             r: BufReader::new(file),
             line_buf: String::new(),
         })
     }
 
-    pub fn next(&mut self) -> Result<Option<(EventEnvelope, Vec<u8>)>> {
+    pub fn read_next(&mut self) -> Result<Option<(EventEnvelope, Vec<u8>)>> {
         self.line_buf.clear();
         let n = self.r.read_line(&mut self.line_buf)?;
         if n == 0 {

@@ -21,10 +21,22 @@ fn main() -> anyhow::Result<()> {
     let eth = InstrumentKey::new("binance", "ETHUSDT");
 
     let events = vec![
-        ExecEvent::OrderCreated { instrument: btc.clone(), id: OrderId(1) },
-        ExecEvent::OrderAcked { instrument: btc.clone(), id: OrderId(1) },
-        ExecEvent::OrderCreated { instrument: eth.clone(), id: OrderId(2) },
-        ExecEvent::OrderAcked { instrument: eth.clone(), id: OrderId(2) },
+        ExecEvent::OrderCreated {
+            instrument: btc.clone(),
+            id: OrderId(1),
+        },
+        ExecEvent::OrderAcked {
+            instrument: btc.clone(),
+            id: OrderId(1),
+        },
+        ExecEvent::OrderCreated {
+            instrument: eth.clone(),
+            id: OrderId(2),
+        },
+        ExecEvent::OrderAcked {
+            instrument: eth.clone(),
+            id: OrderId(2),
+        },
     ];
 
     for ev in &events {

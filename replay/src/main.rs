@@ -33,7 +33,7 @@ fn main() -> Result<()> {
     let mut last_seq: Option<u64> = None;
     let mut n: u64 = 0;
 
-    while let Some((env, payload_bytes)) = r.next()? {
+    while let Some((env, payload_bytes)) = r.read_next()? {
         n += 1;
         last_seq = Some(env.seq);
 
@@ -44,26 +44,32 @@ fn main() -> Result<()> {
         match (&ev.event_type, &ev.payload) {
             (EventType::BookSnapshot, EventPayload::BookSnapshot { bids, asks }) => {
                 book = OrderBook::new();
-                book.apply_levels(&bids, &asks);
+                book.apply_levels(bids, asks);
             }
             (EventType::BookDelta, EventPayload::BookDelta { bids, asks }) => {
-                book.apply_levels(&bids, &asks);
+                book.apply_levels(bids, asks);
             }
             _ => {}
         }
 
-        if n % 2000 == 0 {
+        if n.is_multiple_of(2000) {
             let bid = book.top_bid();
             let ask = book.top_ask();
             let h = hash_book(&book);
-            println!("n={} seq={:?} bid={:?} ask={:?} hash={}", n, last_seq, bid, ask, h);
+            println!(
+                "n={} seq={:?} bid={:?} ask={:?} hash={}",
+                n, last_seq, bid, ask, h
+            );
         }
     }
 
     let bid = book.top_bid();
     let ask = book.top_ask();
     let h = hash_book(&book);
-    println!("FINAL n={} seq={:?} bid={:?} ask={:?} hash={}", n, last_seq, bid, ask, h);
+    println!(
+        "FINAL n={} seq={:?} bid={:?} ask={:?} hash={}",
+        n, last_seq, bid, ask, h
+    );
 
     Ok(())
 }

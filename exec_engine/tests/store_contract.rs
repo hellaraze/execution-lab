@@ -1,6 +1,6 @@
-use exec_engine::store::OrderStore;
-use exec_engine::fsm::OrderEvent;
 use exec_engine::error::ExecError;
+use exec_engine::fsm::OrderEvent;
+use exec_engine::store::OrderStore;
 
 #[test]
 fn apply_unknown_order_is_not_found() {

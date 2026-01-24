@@ -9,7 +9,7 @@ fn main() -> Result<()> {
     let mut r = EventLogReader::open(&path)?;
 
     let mut n = 0usize;
-    while let Some((env, payload)) = r.next()? {
+    while let Some((env, payload)) = r.read_next()? {
         println!(
             "seq={} ts_ns={} kind={} stream={} payload_bytes={}",
             env.seq,
