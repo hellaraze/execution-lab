@@ -253,6 +253,7 @@ dependencies = [
  "blake3",
  "el_core",
  "eventlog",
+ "exec_engine",
  "replay",
  "serde",
  "serde_json",
