@@ -1,6 +1,6 @@
 use crate::error::ExecError;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum OrderState {
     New,
     Open,
@@ -9,7 +9,7 @@ pub enum OrderState {
     Rejected,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum OrderEvent {
     Accept,
     Fill { fill_id: u64, qty_atoms: u64 },
