@@ -98,4 +98,15 @@ impl OrderStore {
             },
         );
     }
+
+    pub fn snapshot_hash_hex(&self, id: u64) -> Result<String, ExecError> {
+        use sha2::{Digest, Sha256};
+
+        let snap = self.export_snapshot(id)?;
+        let json = serde_json::to_string(&snap).expect("snapshot json");
+        let mut h = Sha256::new();
+        h.update(json.as_bytes());
+        let out = h.finalize();
+        Ok(format!("{:x}", out))
+    }
 }
