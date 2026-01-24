@@ -4,14 +4,11 @@ use crate::error::ExecError;
 use crate::fsm::{OrderData, OrderEvent};
 
 #[derive(Debug)]
-pub mod snapshot;
-
 pub struct Order {
     pub id: u64,
     pub data: OrderData,
     fill_qty: HashMap<u64, u64>,
     seen_fills: HashSet<u64>,
-
 }
 
 pub struct OrderStore {
@@ -40,28 +37,6 @@ impl OrderStore {
                 seen_fills: HashSet::new(),
             })),
         }
-    }
-
-    pub fn export_snapshot(&self, id: u64) -> Result<crate::store::snapshot::OrderSnapshot, ExecError> {
-        let o = self.orders.get(&id).ok_or(ExecError::NotFound)?;
-        Ok(crate::store::snapshot::OrderSnapshot {
-            id: o.id,
-            state: o.data.state,
-            total_atoms: o.data.total_atoms,
-            filled_atoms: o.data.filled_atoms,
-            fill_qty: o.fill_qty.clone(),
-        })
-    }
-
-    pub fn import_snapshot(&mut self, snap: crate::store::snapshot::OrderSnapshot) {
-        let mut seen = HashSet::new();
-        for k in snap.fill_qty.keys() { seen.insert(*k); }
-        self.orders.insert(snap.id, Order {
-            id: snap.id,
-            data: crate::fsm::OrderData { state: snap.state, total_atoms: snap.total_atoms, filled_atoms: snap.filled_atoms },
-            fill_qty: snap.fill_qty,
-            seen_fills: seen,
-        });
     }
 
     pub fn apply(&mut self, id: u64, ev: OrderEvent) -> Result<(), ExecError> {
