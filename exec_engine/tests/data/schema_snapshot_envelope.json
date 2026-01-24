@@ -1,0 +1,11 @@
+{
+  "kind": "V1",
+  "order": {
+    "fill_qty": [],
+    "filled_atoms": 0,
+    "id": 0,
+    "state": "New",
+    "total_atoms": 0
+  },
+  "version": 1
+}
