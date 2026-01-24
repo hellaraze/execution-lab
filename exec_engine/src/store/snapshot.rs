@@ -1,5 +1,7 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+
 use serde::{Deserialize, Serialize};
+
 use crate::fsm::OrderState;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -8,5 +10,5 @@ pub struct OrderSnapshot {
     pub state: OrderState,
     pub total_atoms: u64,
     pub filled_atoms: u64,
-    pub fill_qty: HashMap<u64, u64>,
+    pub fill_qty: BTreeMap<u64, u64>,
 }

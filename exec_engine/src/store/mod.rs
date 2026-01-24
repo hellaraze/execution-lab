@@ -1,6 +1,6 @@
 pub mod snapshot;
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::error::ExecError;
 use crate::fsm::{OrderData, OrderEvent};
@@ -60,19 +60,28 @@ impl OrderStore {
 
     pub fn export_snapshot(&self, id: u64) -> Result<snapshot::OrderSnapshot, ExecError> {
         let o = self.orders.get(&id).ok_or(ExecError::NotFound)?;
+
+        let mut bt = BTreeMap::new();
+        for (k, v) in o.fill_qty.iter() {
+            bt.insert(*k, *v);
+        }
+
         Ok(snapshot::OrderSnapshot {
             id: o.id,
             state: o.data.state,
             total_atoms: o.data.total_atoms,
             filled_atoms: o.data.filled_atoms,
-            fill_qty: o.fill_qty.clone(),
+            fill_qty: bt,
         })
     }
 
     pub fn import_snapshot(&mut self, snap: snapshot::OrderSnapshot) {
         let mut seen = HashSet::new();
-        for k in snap.fill_qty.keys() {
+        let mut hm = HashMap::new();
+
+        for (k, v) in snap.fill_qty.iter() {
             seen.insert(*k);
+            hm.insert(*k, *v);
         }
 
         self.orders.insert(
@@ -84,7 +93,7 @@ impl OrderStore {
                     total_atoms: snap.total_atoms,
                     filled_atoms: snap.filled_atoms,
                 },
-                fill_qty: snap.fill_qty,
+                fill_qty: hm,
                 seen_fills: seen,
             },
         );
