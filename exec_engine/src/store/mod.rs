@@ -1,3 +1,5 @@
+pub mod snapshot;
+
 use std::collections::{HashMap, HashSet};
 
 use crate::error::ExecError;
@@ -54,5 +56,36 @@ impl OrderStore {
         }
 
         crate::fsm::apply(&mut order.data, &ev)
+    }
+
+    pub fn export_snapshot(&self, id: u64) -> Result<snapshot::OrderSnapshot, ExecError> {
+        let o = self.orders.get(&id).ok_or(ExecError::NotFound)?;
+        Ok(snapshot::OrderSnapshot {
+            id: o.id,
+            state: o.data.state,
+            total_atoms: o.data.total_atoms,
+            filled_atoms: o.data.filled_atoms,
+            fill_qty: o.fill_qty.clone(),
+        })
+    }
+
+    pub fn import_snapshot(&mut self, snap: snapshot::OrderSnapshot) {
+        let mut seen = HashSet::new();
+        for k in snap.fill_qty.keys() {
+            seen.insert(*k);
+        }
+        self.orders.insert(
+            snap.id,
+            Order {
+                id: snap.id,
+                data: OrderData {
+                    state: snap.state,
+                    total_atoms: snap.total_atoms,
+                    filled_atoms: snap.filled_atoms,
+                },
+                fill_qty: snap.fill_qty,
+                seen_fills: seen,
+            },
+        );
     }
 }
