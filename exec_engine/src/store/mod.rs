@@ -1,6 +1,6 @@
 pub mod snapshot;
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use crate::error::ExecError;
 use crate::fsm::{OrderData, OrderEvent};
@@ -58,23 +58,40 @@ impl OrderStore {
         crate::fsm::apply(&mut order.data, &ev)
     }
 
+    // internal canonical snapshot (stable ordering)
     pub fn export_snapshot(&self, id: u64) -> Result<snapshot::OrderSnapshot, ExecError> {
         let o = self.orders.get(&id).ok_or(ExecError::NotFound)?;
 
-        let mut bt = BTreeMap::new();
-        for (k, v) in o.fill_qty.iter() {
-            bt.insert(*k, *v);
-        }
+        let mut v: Vec<(u64, u64)> = o.fill_qty.iter().map(|(k, v)| (*k, *v)).collect();
+        v.sort_by_key(|(k, _)| *k);
 
         Ok(snapshot::OrderSnapshot {
             id: o.id,
             state: o.data.state,
             total_atoms: o.data.total_atoms,
             filled_atoms: o.data.filled_atoms,
-            fill_qty: bt,
+            fill_qty: v,
         })
     }
 
+    pub fn export_envelope(&self, id: u64) -> Result<snapshot::SnapshotEnvelope, ExecError> {
+        let snap = self.export_snapshot(id)?;
+        Ok(snapshot::SnapshotEnvelope::v1(snap))
+    }
+
+    pub fn import_envelope(&mut self, env: snapshot::SnapshotEnvelope) -> Result<(), ExecError> {
+        match env {
+            snapshot::SnapshotEnvelope::V1(v1) => {
+                if v1.version != 1 {
+                    return Err(ExecError::InvalidTransition);
+                }
+                self.import_snapshot(v1.order);
+                Ok(())
+            }
+        }
+    }
+
+    // import canonical snapshot into runtime
     pub fn import_snapshot(&mut self, snap: snapshot::OrderSnapshot) {
         let mut seen = HashSet::new();
         let mut hm = HashMap::new();
@@ -102,11 +119,10 @@ impl OrderStore {
     pub fn snapshot_hash_hex(&self, id: u64) -> Result<String, ExecError> {
         use sha2::{Digest, Sha256};
 
-        let snap = self.export_snapshot(id)?;
-        let json = serde_json::to_string(&snap).expect("snapshot json");
+        let env = self.export_envelope(id)?;
+        let json = serde_json::to_string(&env).expect("snapshot json");
         let mut h = Sha256::new();
         h.update(json.as_bytes());
-        let out = h.finalize();
-        Ok(format!("{:x}", out))
+        Ok(format!("{:x}", h.finalize()))
     }
 }

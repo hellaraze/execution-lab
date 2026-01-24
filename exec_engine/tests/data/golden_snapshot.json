@@ -3,8 +3,14 @@
   "state": "Open",
   "total_atoms": 100,
   "filled_atoms": 30,
-  "fill_qty": {
-    "1": 10,
-    "2": 20
-  }
+  "fill_qty": [
+    [
+      1,
+      10
+    ],
+    [
+      2,
+      20
+    ]
+  ]
 }
