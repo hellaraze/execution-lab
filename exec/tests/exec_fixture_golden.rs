@@ -13,7 +13,10 @@ fn main_hash(events: &[ExecEvent]) -> Result<u64> {
 
 #[test]
 fn exec_fixture_snapshot_hash_golden() -> Result<()> {
-    let fixture_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/exec_fixture.eventlog");
+    let fixture_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/data/exec_fixture.eventlog"
+    );
     let mut r = EventLogReader::open(fixture_path)?;
 
     let mut events: Vec<ExecEvent> = Vec::new();
@@ -23,7 +26,10 @@ fn exec_fixture_snapshot_hash_golden() -> Result<()> {
     }
 
     let h = main_hash(&events)?;
-    let hash_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/data/exec_fixture_snapshot_hash.txt");
+    let hash_path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/data/exec_fixture_snapshot_hash.txt"
+    );
 
     if std::env::var("EL_UPDATE_GOLDEN").as_deref() == Ok("1") {
         fs::write(hash_path, format!("{}\n", h))?;

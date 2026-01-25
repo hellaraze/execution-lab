@@ -28,7 +28,10 @@ fn schema_eventlog_line_exec_golden() -> Result<()> {
     // FIX: correct ctor + durability name; set stream explicitly
     let mut w = EventLogWriter::open_append(&path, "el:exec", Durability::Buffered)?;
 
-    let ev = ExecEvent::OrderCreated { instrument: InstrumentKey::new("binance", "BTCUSDT"), id: OrderId(1) };
+    let ev = ExecEvent::OrderCreated {
+        instrument: InstrumentKey::new("binance", "BTCUSDT"),
+        id: OrderId(1),
+    };
 
     let payload = serde_json::to_vec(&ev)?;
     w.append_bytes("event", now_ns(), &payload)?;
