@@ -4,7 +4,8 @@ use anyhow::Result;
 use eventlog::reader::EventLogReader;
 use eventlog::writer::{Durability, EventLogWriter};
 
-use exec::events::{ExecEvent, OrderId};
+use exec::events::ExecEvent;
+use exec::events::OrderId;
 use exec::util::instrument::InstrumentKey;
 
 use exec_engine::fsm::OrderEvent;
@@ -16,11 +17,10 @@ fn qty_atoms(x: f64) -> u64 {
 
 #[test]
 fn e2e_eventlog_to_exec_engine_snapshot_hash_is_deterministic() -> Result<()> {
+    let instrument = InstrumentKey::new("binance", "BTCUSDT");
     let path = std::env::temp_dir().join("replay_e2e_execengine.eventlog");
     let _ = fs::remove_file(&path);
 
-    // exec::util::instrument::InstrumentKey expects Into<String>
-    let instrument = InstrumentKey::new("Binance", "BTCUSDT");
     let id = OrderId(1);
 
     // minimal realistic stream

@@ -2,7 +2,7 @@ use crate::events::OrderId;
 type Price = f64;
 type Qty = f64;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum ExecEvent {
     OrderAccepted {
         order_id: OrderId,

@@ -1,0 +1,19 @@
+{
+  "envelope": {
+    "checksum": 1027595214,
+    "kind": "event",
+    "payload_b64": "eyJPcmRlckNyZWF0ZWQiOnsiaW5zdHJ1bWVudCI6eyJleGNoYW5nZSI6ImJpbmFuY2UiLCJzeW1ib2wiOiJCVENVU0RUIn0sImlkIjoxfX0=",
+    "seq": 1,
+    "stream": "el:exec",
+    "ts_ns": 0
+  },
+  "payload": {
+    "OrderCreated": {
+      "id": 1,
+      "instrument": {
+        "exchange": "binance",
+        "symbol": "BTCUSDT"
+      }
+    }
+  }
+}

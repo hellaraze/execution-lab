@@ -889,7 +889,6 @@ dependencies = [
  "blake3",
  "el_core",
  "eventlog",
- "exec",
  "exec_engine",
  "orderbook",
  "rand 0.8.5",
