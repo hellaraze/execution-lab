@@ -1,4 +1,5 @@
 use clap::Parser;
+use d2::obs::{Obs, emit_decision_at};
 
 #[cfg(feature = "replay-ro")]
 use d2::ro::extract_last_bbo;
@@ -10,6 +11,9 @@ use el_core::event::Event;
 
 #[derive(Parser, Debug)]
 struct Args {
+    #[arg(long)]
+    obs_out: Option<String>,
+
     /// eventlog A (buy on A)
     a: String,
     /// eventlog B (sell on B)
@@ -38,6 +42,7 @@ fn main() -> anyhow::Result<()> {
 fn main() -> anyhow::Result<()> {
     let a = Args::parse();
 
+    let mut obs = Obs::open(a.obs_out.as_deref());
     // read A
     let mut r_a = eventlog::EventLogReader::open(&a.a)?;
     let mut ev_a: Vec<Event> = Vec::new();
@@ -90,6 +95,7 @@ fn main() -> anyhow::Result<()> {
         },
     );
 
+        emit_decision_at(&mut obs, el_core::time::Timestamp::new(0, el_core::time::TimeSource::Process), &format!("d2_pair_scan decision={:?} reason={:?} edge_bps={:.4} net={:.8} raw={:.8}", s.decision, s.reason, s.net_edge_bps, s.net_spread, s.raw_spread));
     let tag = if matches!(s.decision, d2::GasDecision::Gas) {
         "GAS"
     } else {

@@ -1,0 +1,9 @@
+[package]
+name = "strategy_registry"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+indexmap = "2"
+thiserror = "1"
+strategy_sdk = { path = "../strategy_sdk" }

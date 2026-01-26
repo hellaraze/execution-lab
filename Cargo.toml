@@ -1,17 +1,23 @@
 [workspace]
 members = [
-  "exec_engine",
   "core",
-  "connectors",
-  "orderbook",
   "eventlog",
+  "orderbook",
+  "connectors",
   "replay",
   "sim",
-  "risk",
+  "exec_engine",
   "exec",
+  "risk",
+  "d2",
+  "strategy_sdk",
+  "strategy_registry",
   "strategy",
-  "api", "adapters", "exec_engine", "d2", "strategy_sdk", "strategy_registry",  
-  ]
+  "api",
+  "adapters",
+  "el_risk",
+  "el_obs",
+]
 resolver = "2"
 
 [workspace.package]

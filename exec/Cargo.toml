@@ -6,6 +6,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+el_risk = { path = "../el_risk" }
+el_obs = { path = "../el_obs" }
 serde = { workspace = true, features = ["derive"] }
 uuid = { version = "1", features = ["v4"] }
 replay = { path = "../replay" }
