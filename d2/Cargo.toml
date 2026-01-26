@@ -8,10 +8,15 @@ default = []
 replay-ro = ["el_core"]
 
 [dependencies]
-serde = { version = "1", features = ["derive"] }
 thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+
+eventlog = { path = "../eventlog" }
 el_core = { path = "../core", optional = true }
 
 [dev-dependencies]
-uuid = "1"
 approx = "0.5"
+uuid = "1"

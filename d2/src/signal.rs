@@ -6,7 +6,7 @@ pub enum GasDecision {
     NoGas,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DecisionReason {
     Pass,
     BelowEpsilon,
