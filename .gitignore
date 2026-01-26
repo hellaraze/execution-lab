@@ -21,3 +21,4 @@ var/
 
 # test temp files
 replay/tests/data/_tmp_*.eventlog
+__pycache__/
