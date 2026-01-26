@@ -10,7 +10,7 @@ members = [
   "risk",
   "exec",
   "strategy",
-  "api", "adapters", "exec_engine", "d2",
+  "api", "adapters", "exec_engine", "d2", "strategy_sdk", "strategy_registry",  
   ]
 resolver = "2"
 
