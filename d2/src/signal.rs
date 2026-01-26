@@ -6,37 +6,51 @@ pub enum GasDecision {
     NoGas,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DecisionReason {
+    Pass,
+    BelowEpsilon,
+    BelowMinEdgeBps,
+    FeesEatSpread,
+    InvalidInput,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Signal {
     pub raw_spread: f64,
     pub net_spread: f64,
     pub net_edge_bps: f64,
     pub decision: GasDecision,
+    pub reason: DecisionReason,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Thresholds {
-    /// absolute net spread threshold (same units as price, e.g. USD)
     pub epsilon: f64,
-    /// minimum edge in basis points (bps) relative to buy_price
     pub min_edge_bps: f64,
 }
 
-impl Thresholds {
-    pub fn pass(&self, net_spread: f64, buy_price: f64) -> bool {
-        if buy_price <= 0.0 {
-            return false;
-        }
-        let edge_bps = (net_spread / buy_price) * 10_000.0;
-        net_spread > self.epsilon && edge_bps > self.min_edge_bps
+fn decide(net: f64, edge_bps: f64, t: Thresholds) -> (GasDecision, DecisionReason) {
+    if !net.is_finite() || !edge_bps.is_finite() {
+        return (GasDecision::NoGas, DecisionReason::InvalidInput);
     }
+    if net <= 0.0 {
+        return (GasDecision::NoGas, DecisionReason::FeesEatSpread);
+    }
+    if net <= t.epsilon {
+        return (GasDecision::NoGas, DecisionReason::BelowEpsilon);
+    }
+    if edge_bps <= t.min_edge_bps {
+        return (GasDecision::NoGas, DecisionReason::BelowMinEdgeBps);
+    }
+    (GasDecision::Gas, DecisionReason::Pass)
 }
 
 pub fn compute_signal(
     input: SpreadInput,
     buy_fees: Fees,
     sell_fees: Fees,
-    thresholds: Thresholds,
+    t: Thresholds,
 ) -> Signal {
     let raw_spread = input.sell_price - input.buy_price;
 
@@ -44,22 +58,15 @@ pub fn compute_signal(
     let sell_fee = sell_fees.effective(input.sell_is_maker) * input.sell_price;
 
     let net_spread = raw_spread - buy_fee - sell_fee;
-    let net_edge_bps = if input.buy_price > 0.0 {
-        (net_spread / input.buy_price) * 10_000.0
-    } else {
-        f64::NAN
-    };
+    let net_edge_bps = (net_spread / input.buy_price) * 10_000.0;
 
-    let decision = if thresholds.pass(net_spread, input.buy_price) {
-        GasDecision::Gas
-    } else {
-        GasDecision::NoGas
-    };
+    let (decision, reason) = decide(net_spread, net_edge_bps, t);
 
     Signal {
         raw_spread,
         net_spread,
         net_edge_bps,
         decision,
+        reason,
     }
 }

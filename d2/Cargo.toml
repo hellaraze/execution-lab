@@ -3,9 +3,15 @@ name = "d2"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+replay-ro = ["el_core"]
+
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 thiserror = "1"
+el_core = { path = "../core", optional = true }
 
 [dev-dependencies]
+uuid = "1"
 approx = "0.5"
