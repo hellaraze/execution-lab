@@ -1,6 +1,6 @@
-use serde::{Serialize, Deserialize};
+use d2::{DecisionReason, GasDecision};
 use el_core::instrument::InstrumentKey;
-use d2::{GasDecision, DecisionReason};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StrategyContext {
@@ -9,10 +9,16 @@ pub struct StrategyContext {
 
 pub trait Strategy: Send + Sync + 'static {
     fn name(&self) -> &'static str;
-    fn compute(&self, ctx: &StrategyContext, input: &StrategyInput) -> (GasDecision, DecisionReason);
+    fn compute(
+        &self,
+        ctx: &StrategyContext,
+        input: &StrategyInput,
+    ) -> (GasDecision, DecisionReason);
 }
 
-pub fn decision_no_gas(reason: DecisionReason) -> (GasDecision, DecisionReason) { (GasDecision::NoGas, reason) }
+pub fn decision_no_gas(reason: DecisionReason) -> (GasDecision, DecisionReason) {
+    (GasDecision::NoGas, reason)
+}
 
 pub mod example;
 

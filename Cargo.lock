@@ -259,6 +259,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d52eff69cd5e647efe296129160853a42795992097e8af39800e1060caeea9b"
 
 [[package]]
+name = "contracts_bridge"
+version = "0.1.0"
+dependencies = [
+ "el_contracts",
+ "el_core",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -293,6 +301,7 @@ dependencies = [
  "anyhow",
  "approx",
  "clap",
+ "contracts_bridge",
  "el_core",
  "el_obs",
  "eventlog",
@@ -340,6 +349,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "el_contracts"
+version = "0.1.0"
+dependencies = [
+ "el_core",
+ "serde",
+]
+
+[[package]]
 name = "el_core"
 version = "0.1.0"
 dependencies = [
@@ -354,6 +371,8 @@ dependencies = [
 name = "el_obs"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "el_contracts",
  "el_core",
  "serde",
  "serde_json",

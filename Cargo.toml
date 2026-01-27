@@ -16,7 +16,7 @@ members = [
   "api",
   "adapters",
   "el_risk",
-  "el_obs",
+  "el_obs", "el_contracts", "contracts_bridge",
 ]
 resolver = "2"
 

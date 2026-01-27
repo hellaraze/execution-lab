@@ -27,13 +27,19 @@ pub mod ro {
             match (&e.event_type, &e.payload) {
                 (EventType::TickerBbo, EventPayload::TickerBbo { bid, ask }) => {
                     if valid(*bid, *ask) {
-                        last = Some(Bbo { bid: *bid, ask: *ask });
+                        last = Some(Bbo {
+                            bid: *bid,
+                            ask: *ask,
+                        });
                     }
                 }
                 (EventType::BookSnapshot, EventPayload::BookSnapshot { bids, asks }) => {
                     if let (Some((bid, _)), Some((ask, _))) = (bids.first(), asks.first()) {
                         if valid(*bid, *ask) {
-                            last = Some(Bbo { bid: *bid, ask: *ask });
+                            last = Some(Bbo {
+                                bid: *bid,
+                                ask: *ask,
+                            });
                         }
                     }
                 }

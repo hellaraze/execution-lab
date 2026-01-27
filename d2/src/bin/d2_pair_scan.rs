@@ -1,5 +1,4 @@
 use clap::Parser;
-use d2::obs::{Obs, emit_decision_at};
 
 #[cfg(feature = "replay-ro")]
 use d2::ro::extract_last_bbo;
@@ -41,37 +40,41 @@ fn main() -> anyhow::Result<()> {
 #[cfg(feature = "replay-ro")]
 fn main() -> anyhow::Result<()> {
     let a = Args::parse();
+    let mut obs = d2::obs::Obs::open(a.obs_out.as_deref());
 
-    let mut obs = Obs::open(a.obs_out.as_deref());
-    // read A
-    let mut r_a = eventlog::EventLogReader::open(&a.a)?;
-    let mut ev_a: Vec<Event> = Vec::new();
-    while let Some((_env, payload)) = r_a.read_next()? {
-        let e: Event = serde_json::from_slice(&payload)?;
-        ev_a.push(e);
+    fn read_events(path: &str) -> anyhow::Result<Vec<Event>> {
+        let mut r = eventlog::EventLogReader::open(path)?;
+        let mut out = Vec::new();
+        while let Some((_env, payload)) = r.read_next()? {
+            let e: Event = serde_json::from_slice(&payload)?;
+            out.push(e);
+        }
+        Ok(out)
     }
 
-    // read B
-    let mut r_b = eventlog::EventLogReader::open(&a.b)?;
-    let mut ev_b: Vec<Event> = Vec::new();
-    while let Some((_env, payload)) = r_b.read_next()? {
-        let e: Event = serde_json::from_slice(&payload)?;
-        ev_b.push(e);
-    }
+    let events_a = read_events(&a.a)?;
+    let events_b = read_events(&a.b)?;
 
-    let bbo_a =
-        extract_last_bbo(&ev_a).ok_or_else(|| anyhow::anyhow!("no BBO/book snapshot in A"))?;
-    let mut bbo_b =
-        extract_last_bbo(&ev_b).ok_or_else(|| anyhow::anyhow!("no BBO/book snapshot in B"))?;
+    let bbo_a = extract_last_bbo(&events_a).ok_or_else(|| anyhow::anyhow!("bbo a"))?;
+    let mut bbo_b = extract_last_bbo(&events_b).ok_or_else(|| anyhow::anyhow!("bbo b"))?;
 
-    // deterministic synthetic shift on B (post-extract)
-    if a.b_shift_bps != 0.0 {
-        let k = 1.0 + (a.b_shift_bps / 10_000.0);
-        bbo_b.bid *= k;
-        bbo_b.ask *= k;
-    }
+    // deterministic synthetic shift on B
+    let shift = a.b_shift_bps / 10_000.0;
+    bbo_b.bid *= 1.0 + shift;
+    bbo_b.ask *= 1.0 + shift;
 
-    // BUY on A at ask, SELL on B at bid
+    let buy_fees = Fees {
+        maker: 0.0,
+        taker: a.buy_taker,
+        rebate: 0.0,
+    };
+    let sell_fees = Fees {
+        maker: 0.0,
+        taker: a.sell_taker,
+        rebate: 0.0,
+    };
+
+    // buy on A at ask, sell on B at bid
     let s = compute_signal(
         d2::SpreadInput {
             buy_price: bbo_a.ask,
@@ -79,23 +82,26 @@ fn main() -> anyhow::Result<()> {
             buy_is_maker: false,
             sell_is_maker: false,
         },
-        Fees {
-            maker: 0.0,
-            taker: a.buy_taker,
-            rebate: 0.0,
-        },
-        Fees {
-            maker: 0.0,
-            taker: a.sell_taker,
-            rebate: 0.0,
-        },
+        buy_fees,
+        sell_fees,
         Thresholds {
             epsilon: a.epsilon,
             min_edge_bps: a.min_edge_bps,
         },
     );
 
-        emit_decision_at(&mut obs, el_core::time::Timestamp::new(0, el_core::time::TimeSource::Process), &format!("d2_pair_scan decision={:?} reason={:?} edge_bps={:.4} net={:.8} raw={:.8}", s.decision, s.reason, s.net_edge_bps, s.net_spread, s.raw_spread));
+    let ts = el_core::time::Timestamp::new(0, el_core::time::TimeSource::Process);
+    let instrument =
+        el_core::instrument::InstrumentKey::new(el_core::event::Exchange::Binance, "PAIR");
+    d2::obs::emit_decision_at(
+        &mut obs,
+        instrument,
+        ts,
+        s.decision,
+        s.net_edge_bps,
+        s.reason,
+    );
+
     let tag = if matches!(s.decision, d2::GasDecision::Gas) {
         "GAS"
     } else {

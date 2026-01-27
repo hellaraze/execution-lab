@@ -50,7 +50,10 @@ fn main() -> anyhow::Result<()> {
                 let (ask, _aq) = asks.first().context("BookSnapshot asks empty")?;
                 // convert this event into TickerBbo (keep id/instrument/ts)
                 e.event_type = EventType::TickerBbo;
-                e.payload = EventPayload::TickerBbo { bid: *bid, ask: *ask };
+                e.payload = EventPayload::TickerBbo {
+                    bid: *bid,
+                    ask: *ask,
+                };
             }
             _ => continue,
         }
@@ -60,7 +63,8 @@ fn main() -> anyhow::Result<()> {
             EventPayload::TickerBbo { bid, ask } => {
                 *bid *= k;
                 *ask *= k;
-                if !bid.is_finite() || !ask.is_finite() || *bid <= 0.0 || *ask <= 0.0 || *bid > *ask {
+                if !bid.is_finite() || !ask.is_finite() || *bid <= 0.0 || *ask <= 0.0 || *bid > *ask
+                {
                     bail!("invalid shifted bbo: bid={} ask={} (k={})", bid, ask, k);
                 }
             }
@@ -74,6 +78,9 @@ fn main() -> anyhow::Result<()> {
 
     w.flush()?;
 
-    println!("wrote bbo-only synth: in={} out={} events_in={} events_out={} k={}", a.in_path, a.out_path, n_in, n_out, k);
+    println!(
+        "wrote bbo-only synth: in={} out={} events_in={} events_out={} k={}",
+        a.in_path, a.out_path, n_in, n_out, k
+    );
     Ok(())
 }

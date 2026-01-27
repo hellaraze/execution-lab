@@ -21,7 +21,9 @@ pub struct FileSink {
 impl FileSink {
     pub fn open_append(path: impl AsRef<Path>) -> std::io::Result<Self> {
         let f = OpenOptions::new().create(true).append(true).open(path)?;
-        Ok(Self { w: BufWriter::new(f) })
+        Ok(Self {
+            w: BufWriter::new(f),
+        })
     }
 }
 

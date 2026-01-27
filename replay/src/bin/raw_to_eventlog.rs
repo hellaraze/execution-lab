@@ -81,7 +81,8 @@ fn main() -> Result<()> {
         let ts_ns = extract_ts_ns(&v);
         let bytes = serde_json::to_vec(&v).context("re-encode json")?;
 
-        w.append_bytes(kind, ts_ns, &bytes).context("append_bytes")?;
+        w.append_bytes(kind, ts_ns, &bytes)
+            .context("append_bytes")?;
         n += 1;
     }
 

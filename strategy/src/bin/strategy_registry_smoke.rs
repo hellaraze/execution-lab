@@ -1,7 +1,7 @@
+use el_core::event::Exchange;
+use el_core::instrument::InstrumentKey;
 use strategy::registry::build_default_registry;
 use strategy_sdk::{StrategyContext, StrategyInput};
-use el_core::instrument::InstrumentKey;
-use el_core::event::Exchange;
 
 fn main() {
     let reg = build_default_registry();

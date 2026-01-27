@@ -1,16 +1,16 @@
-use clap::Parser;
 use anyhow::Context;
+use clap::Parser;
 
 use d2::ro::extract_last_bbo;
-use d2::{compute_signal, Fees, Thresholds, SpreadInput, GasDecision};
+use d2::{Fees, GasDecision, SpreadInput, Thresholds, compute_signal};
 
 use el_core::event::Event;
 
 use strategy::registry::build_default_registry;
 use strategy_sdk::{StrategyContext, StrategyInput};
 
-use el_core::instrument::InstrumentKey;
 use el_core::event::Exchange;
+use el_core::instrument::InstrumentKey;
 
 #[derive(Parser, Debug)]
 struct Args {
@@ -104,18 +104,35 @@ fn main() -> anyhow::Result<()> {
         buy_is_maker: input.buy_is_maker,
         sell_is_maker: input.sell_is_maker,
     };
-    let buy_fees = Fees { maker: input.buy_maker_bps, taker: input.buy_taker_bps, rebate: input.buy_rebate_bps };
-    let sell_fees = Fees { maker: input.sell_maker_bps, taker: input.sell_taker_bps, rebate: input.sell_rebate_bps };
-    let t = Thresholds { epsilon: input.epsilon, min_edge_bps: input.min_edge_bps };
+    let buy_fees = Fees {
+        maker: input.buy_maker_bps,
+        taker: input.buy_taker_bps,
+        rebate: input.buy_rebate_bps,
+    };
+    let sell_fees = Fees {
+        maker: input.sell_maker_bps,
+        taker: input.sell_taker_bps,
+        rebate: input.sell_rebate_bps,
+    };
+    let t = Thresholds {
+        epsilon: input.epsilon,
+        min_edge_bps: input.min_edge_bps,
+    };
 
     let sig = compute_signal(si, buy_fees, sell_fees, t);
 
     // invariant: strategy == d2
-    if format!("{:?}", d_s) != format!("{:?}", sig.decision) || format!("{:?}", reason_s) != format!("{:?}", sig.reason) {
+    if format!("{:?}", d_s) != format!("{:?}", sig.decision)
+        || format!("{:?}", reason_s) != format!("{:?}", sig.reason)
+    {
         die_invalid("strategy output != d2 compute_signal (contract drift)");
     }
 
-    let tag = if matches!(sig.decision, GasDecision::Gas) { "GAS" } else { "NO_GAS" };
+    let tag = if matches!(sig.decision, GasDecision::Gas) {
+        "GAS"
+    } else {
+        "NO_GAS"
+    };
 
     println!(
         "{} reason={:?} edge_bps={:.4} net={:.8} raw={:.8} bid={:.2} ask={:.2}",

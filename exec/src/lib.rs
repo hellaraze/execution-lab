@@ -1,7 +1,7 @@
 pub mod adapter;
-pub mod risk_hook;
 pub mod event;
 pub mod mock_adapter;
+pub mod risk_hook;
 
 pub mod events;
 pub mod guard;

@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RiskLimits {
@@ -7,6 +7,8 @@ pub struct RiskLimits {
 
 impl Default for RiskLimits {
     fn default() -> Self {
-        Self { max_notional: f64::INFINITY }
+        Self {
+            max_notional: f64::INFINITY,
+        }
     }
 }

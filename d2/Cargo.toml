@@ -5,9 +5,9 @@ edition = "2021"
 
 [features]
 default = []
-replay-ro = ["el_core"]
-
+replay-ro = []
 [dependencies]
+contracts_bridge = { path = "../contracts_bridge" }
 el_obs = { path = "../el_obs" }
 thiserror = "1"
 serde = { version = "1", features = ["derive"] }
@@ -16,8 +16,7 @@ anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 
 eventlog = { path = "../eventlog" }
-el_core = { path = "../core", optional = true }
-
+el_core = { path = "../core" }
 [dev-dependencies]
 approx = "0.5"
 uuid = "1"

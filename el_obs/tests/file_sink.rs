@@ -1,6 +1,6 @@
+use el_core::time::{TimeSource, Timestamp};
 use el_obs::event::ObsEvent;
 use el_obs::sink::{FileSink, ObsSink};
-use el_core::time::{Timestamp, TimeSource};
 
 #[test]
 fn file_sink_writes_jsonl() {
