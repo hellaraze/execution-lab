@@ -1,5 +1,5 @@
 use clap::Parser;
-use elctl::{cli, config, evidence, out, run};
+use elctl::{cli, config, evidence, exchange, out, run};
 use std::process::Command;
 
 fn main() -> anyhow::Result<()> {
@@ -8,7 +8,6 @@ fn main() -> anyhow::Result<()> {
 
     match args.cmd {
         cli::Command::Demo(a) => {
-            // Deterministic offline demo: use d2_scan replay-ro against an eventlog.
             let mut c = Command::new("cargo");
             c.args([
                 "run",
@@ -63,7 +62,6 @@ fn main() -> anyhow::Result<()> {
         }
 
         cli::Command::Replay(a) => {
-            // Replay mode is identical to demo for Phase 2 (offline, deterministic).
             let mut c = Command::new("cargo");
             c.args([
                 "run",
@@ -117,12 +115,97 @@ fn main() -> anyhow::Result<()> {
             }
         }
 
-        cli::Command::Paper => {
-            anyhow::bail!("paper mode is disabled in Phase 2");
-        }
-        cli::Command::Live => {
-            anyhow::bail!("live mode is disabled");
-        }
+        cli::Command::Exchange(x) => match x {
+            cli::ExchangeCmd::List => {
+                let reg = exchange::registry();
+                println!("{}", serde_json::to_string(&reg)?);
+            }
+            cli::ExchangeCmd::Connect(a) => {
+                let ex = exchange::find_exchange(&a.exchange)
+                    .ok_or_else(|| anyhow::anyhow!("unknown exchange: {}", a.exchange))?;
+
+                // Load secrets, but NEVER print raw values.
+                let s = exchange::load_secrets_toml(&a.secrets_file)?;
+                let missing = s.missing_for(ex.required_secrets);
+
+                let mut present = Vec::new();
+                for k in ex.required_secrets {
+                    let has = match *k {
+                        "api_key" => s.api_key.as_ref().map(|v| !v.is_empty()).unwrap_or(false),
+                        "api_secret" => s
+                            .api_secret
+                            .as_ref()
+                            .map(|v| !v.is_empty())
+                            .unwrap_or(false),
+                        "passphrase" => s
+                            .passphrase
+                            .as_ref()
+                            .map(|v| !v.is_empty())
+                            .unwrap_or(false),
+                        _ => false,
+                    };
+                    if has {
+                        present.push(k.to_string());
+                    }
+                }
+
+                // Stubbed health checks (Phase 3): structure only.
+                let checks = vec![
+                    exchange::CheckResult {
+                        name: "auth_format".to_string(),
+                        ok: missing.is_empty(),
+                        detail: "required secrets present".to_string(),
+                    },
+                    exchange::CheckResult {
+                        name: "clock_skew".to_string(),
+                        ok: true,
+                        detail: "stubbed".to_string(),
+                    },
+                    exchange::CheckResult {
+                        name: "rate_limits".to_string(),
+                        ok: true,
+                        detail: "stubbed".to_string(),
+                    },
+                ];
+
+                let result = exchange::ConnectResult {
+                    ok: missing.is_empty(),
+                    exchange: ex.id.to_string(),
+                    secrets_present: present,
+                    secrets_missing: missing,
+                    checks,
+                };
+
+                // Write connect evidence (JSON). Do NOT include secret values.
+                let ev = serde_json::json!({
+                    "ok": result.ok,
+                    "baseline_tag": "baseline-sealed",
+                    "git_head": out::git_head(),
+                    "mode": format!("{:?}", cfg.mode).to_lowercase(),
+                    "exchange": ex.id,
+                    "secrets_file": elctl::redact::redact(&a.secrets_file),
+                    "result": result
+                });
+
+                let dir = std::path::Path::new(&a.evidence)
+                    .parent()
+                    .unwrap_or(std::path::Path::new("."));
+                std::fs::create_dir_all(dir)?;
+                std::fs::write(&a.evidence, serde_json::to_string_pretty(&ev)?)?;
+
+                println!("{}", serde_json::to_string(&ev)?);
+                if !result.ok {
+                    anyhow::bail!(
+                        "connect failed (missing secrets) (see evidence: {})",
+                        a.evidence
+                    );
+                }
+            }
+        },
+
+        cli::Command::Paper => anyhow::bail!("paper mode is disabled"),
+        cli::Command::Live => anyhow::bail!("live mode is disabled"),
+
         cli::Command::Status => {
             let outj = out::StatusOut {
                 ok: true,
@@ -133,16 +216,15 @@ fn main() -> anyhow::Result<()> {
             println!("{}", serde_json::to_string(&outj)?);
         }
         cli::Command::Health => {
-            let outj = out::HealthOut { ok: true };
-            println!("{}", serde_json::to_string(&outj)?);
+            println!("{}", serde_json::to_string(&out::HealthOut { ok: true })?)
         }
-        cli::Command::Diagnose => {
-            let outj = out::DiagnoseOut {
+        cli::Command::Diagnose => println!(
+            "{}",
+            serde_json::to_string(&out::DiagnoseOut {
                 ok: true,
-                notes: vec!["no issues detected".to_string()],
-            };
-            println!("{}", serde_json::to_string(&outj)?);
-        }
+                notes: vec!["no issues detected".to_string()]
+            })?
+        ),
     }
 
     Ok(())

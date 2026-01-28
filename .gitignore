@@ -27,3 +27,6 @@ repro_baseline_*.log
 
 evidence/
 evidence/*.json
+
+secrets/
+*.secrets.*

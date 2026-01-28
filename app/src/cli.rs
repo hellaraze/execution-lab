@@ -19,7 +19,11 @@ pub enum Command {
     /// Replay run (offline)
     Replay(ReplayArgs),
 
-    /// Paper mode (disabled in Phase 2)
+    /// Exchange registry and connect workflow
+    #[command(subcommand)]
+    Exchange(ExchangeCmd),
+
+    /// Paper mode (disabled)
     Paper,
 
     /// Live mode (hard-disabled)
@@ -33,6 +37,29 @@ pub enum Command {
 
     /// Diagnostics (JSON)
     Diagnose,
+}
+
+#[derive(Subcommand)]
+pub enum ExchangeCmd {
+    /// List supported exchanges and capabilities
+    List,
+
+    /// Connect an exchange using a secrets file (TOML)
+    Connect(ExchangeConnectArgs),
+}
+
+#[derive(clap::Args)]
+pub struct ExchangeConnectArgs {
+    /// Exchange id (e.g. binance, okx, bybit)
+    pub exchange: String,
+
+    /// Path to secrets TOML (never logged)
+    #[arg(long)]
+    pub secrets_file: String,
+
+    /// Where to write connect evidence JSON
+    #[arg(long, default_value = "evidence/connect_evidence.json")]
+    pub evidence: String,
 }
 
 #[derive(clap::Args)]
