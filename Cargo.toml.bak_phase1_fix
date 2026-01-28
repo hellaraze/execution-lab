@@ -16,11 +16,7 @@ members = [
   "api",
   "adapters",
   "el_risk",
-  "el_obs",
-  "el_contracts",
-  "contracts_bridge",
-  "app",
-]
+  "el_obs", "el_contracts", "contracts_bridge", "app",
 resolver = "2"
 
 [workspace.package]
