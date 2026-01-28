@@ -6,3 +6,10 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+exec = { path = "../exec" }
+el_risk = { path = "../el_risk" }
+el_obs = { path = "../el_obs" }
+el_core = { path = "../core", package = "el_core" }
+eventlog = { path = "../eventlog" }
+serde_json = "1"
+anyhow = "1"
