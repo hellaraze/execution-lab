@@ -24,3 +24,6 @@ replay/tests/data/_tmp_*.eventlog
 __pycache__/
 
 repro_baseline_*.log
+
+evidence/
+evidence/*.json

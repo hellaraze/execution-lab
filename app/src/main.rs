@@ -1,45 +1,147 @@
-use elctl::{cli, config, out};
-
 use clap::Parser;
-use cli::{Cli, Command};
+use elctl::{cli, config, evidence, out, run};
+use std::process::Command;
 
 fn main() -> anyhow::Result<()> {
-    let cli = Cli::parse();
-    let cfg = config::load(&cli.config)?;
+    let args = cli::Cli::parse();
+    let cfg = config::load(&args.config)?;
 
-    match cli.cmd {
-        Command::Demo => {
-            println!("{{\"ok\":true,\"mode\":\"demo\"}}");
+    match args.cmd {
+        cli::Command::Demo(a) => {
+            // Deterministic offline demo: use d2_scan replay-ro against an eventlog.
+            let mut c = Command::new("cargo");
+            c.args([
+                "run",
+                "-q",
+                "-p",
+                "d2",
+                "--features",
+                "replay-ro",
+                "--bin",
+                "d2_scan",
+                "--",
+                &a.input,
+                "--top-n",
+                &a.top_n.to_string(),
+            ]);
+
+            let cmd_vec = vec![
+                "cargo".to_string(),
+                "run".to_string(),
+                "-q".to_string(),
+                "-p".to_string(),
+                "d2".to_string(),
+                "--features".to_string(),
+                "replay-ro".to_string(),
+                "--bin".to_string(),
+                "d2_scan".to_string(),
+                "--".to_string(),
+                a.input.clone(),
+                "--top-n".to_string(),
+                a.top_n.to_string(),
+            ];
+
+            let r = run::run_cmd(c)?;
+            let ev = evidence::Evidence {
+                ok: r.exit_code == 0,
+                baseline_tag: "baseline-sealed",
+                git_head: out::git_head(),
+                mode: format!("{:?}", cfg.mode).to_lowercase(),
+                input: a.input.clone(),
+                tool: evidence::ToolRun {
+                    cmd: cmd_vec,
+                    exit_code: r.exit_code,
+                    stdout: r.stdout,
+                    stderr: r.stderr,
+                },
+            };
+            evidence::write_json(&a.evidence, &ev)?;
+            println!("{}", serde_json::to_string(&ev)?);
+            if !ev.ok {
+                anyhow::bail!("demo failed (see evidence: {})", a.evidence);
+            }
         }
-        Command::Replay => {
-            println!("{{\"ok\":true,\"mode\":\"replay\"}}");
+
+        cli::Command::Replay(a) => {
+            // Replay mode is identical to demo for Phase 2 (offline, deterministic).
+            let mut c = Command::new("cargo");
+            c.args([
+                "run",
+                "-q",
+                "-p",
+                "d2",
+                "--features",
+                "replay-ro",
+                "--bin",
+                "d2_scan",
+                "--",
+                &a.input,
+                "--top-n",
+                &a.top_n.to_string(),
+            ]);
+
+            let cmd_vec = vec![
+                "cargo".to_string(),
+                "run".to_string(),
+                "-q".to_string(),
+                "-p".to_string(),
+                "d2".to_string(),
+                "--features".to_string(),
+                "replay-ro".to_string(),
+                "--bin".to_string(),
+                "d2_scan".to_string(),
+                "--".to_string(),
+                a.input.clone(),
+                "--top-n".to_string(),
+                a.top_n.to_string(),
+            ];
+
+            let r = run::run_cmd(c)?;
+            let ev = evidence::Evidence {
+                ok: r.exit_code == 0,
+                baseline_tag: "baseline-sealed",
+                git_head: out::git_head(),
+                mode: format!("{:?}", cfg.mode).to_lowercase(),
+                input: a.input.clone(),
+                tool: evidence::ToolRun {
+                    cmd: cmd_vec,
+                    exit_code: r.exit_code,
+                    stdout: r.stdout,
+                    stderr: r.stderr,
+                },
+            };
+            evidence::write_json(&a.evidence, &ev)?;
+            println!("{}", serde_json::to_string(&ev)?);
+            if !ev.ok {
+                anyhow::bail!("replay failed (see evidence: {})", a.evidence);
+            }
         }
-        Command::Paper => {
-            println!("{{\"ok\":true,\"mode\":\"paper\"}}");
+
+        cli::Command::Paper => {
+            anyhow::bail!("paper mode is disabled in Phase 2");
         }
-        Command::Live => {
-            // Hard-disabled in Phase 1 by design.
-            anyhow::bail!("live mode is disabled in Phase 1");
+        cli::Command::Live => {
+            anyhow::bail!("live mode is disabled");
         }
-        Command::Status => {
-            let out = out::StatusOut {
+        cli::Command::Status => {
+            let outj = out::StatusOut {
                 ok: true,
                 baseline_tag: "baseline-sealed",
                 git_head: out::git_head(),
                 mode: format!("{:?}", cfg.mode).to_lowercase(),
             };
-            println!("{}", serde_json::to_string(&out)?);
+            println!("{}", serde_json::to_string(&outj)?);
         }
-        Command::Health => {
-            let out = out::HealthOut { ok: true };
-            println!("{}", serde_json::to_string(&out)?);
+        cli::Command::Health => {
+            let outj = out::HealthOut { ok: true };
+            println!("{}", serde_json::to_string(&outj)?);
         }
-        Command::Diagnose => {
-            let out = out::DiagnoseOut {
+        cli::Command::Diagnose => {
+            let outj = out::DiagnoseOut {
                 ok: true,
                 notes: vec!["no issues detected".to_string()],
             };
-            println!("{}", serde_json::to_string(&out)?);
+            println!("{}", serde_json::to_string(&outj)?);
         }
     }
 
