@@ -1,16 +1,14 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, Serialize)]
-pub enum MarketKind {
-    Spot,
-    Perp,
-}
-
-#[derive(Debug, Clone, Copy, Serialize)]
 pub struct Capabilities {
     pub spot: bool,
     pub perp: bool,
     pub sandbox: bool,
+
+    // Market data (Phase 4)
+    pub md_depth: bool,
+    pub md_bbo: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -30,6 +28,8 @@ pub fn registry() -> Vec<ExchangeInfo> {
                 spot: true,
                 perp: true,
                 sandbox: false,
+                md_depth: true,
+                md_bbo: true,
             },
             required_secrets: &["api_key", "api_secret"],
         },
@@ -40,6 +40,8 @@ pub fn registry() -> Vec<ExchangeInfo> {
                 spot: true,
                 perp: true,
                 sandbox: true,
+                md_depth: true,
+                md_bbo: true,
             },
             required_secrets: &["api_key", "api_secret", "passphrase"],
         },
@@ -50,6 +52,8 @@ pub fn registry() -> Vec<ExchangeInfo> {
                 spot: true,
                 perp: true,
                 sandbox: true,
+                md_depth: true,
+                md_bbo: true,
             },
             required_secrets: &["api_key", "api_secret"],
         },

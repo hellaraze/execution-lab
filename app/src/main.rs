@@ -1,5 +1,5 @@
 use clap::Parser;
-use elctl::{cli, config, evidence, exchange, out, run};
+use elctl::{cli, config, evidence, exchange, md, out, run};
 use std::process::Command;
 
 fn main() -> anyhow::Result<()> {
@@ -116,15 +116,11 @@ fn main() -> anyhow::Result<()> {
         }
 
         cli::Command::Exchange(x) => match x {
-            cli::ExchangeCmd::List => {
-                let reg = exchange::registry();
-                println!("{}", serde_json::to_string(&reg)?);
-            }
+            cli::ExchangeCmd::List => println!("{}", serde_json::to_string(&exchange::registry())?),
             cli::ExchangeCmd::Connect(a) => {
                 let ex = exchange::find_exchange(&a.exchange)
                     .ok_or_else(|| anyhow::anyhow!("unknown exchange: {}", a.exchange))?;
 
-                // Load secrets, but NEVER print raw values.
                 let s = exchange::load_secrets_toml(&a.secrets_file)?;
                 let missing = s.missing_for(ex.required_secrets);
 
@@ -149,7 +145,6 @@ fn main() -> anyhow::Result<()> {
                     }
                 }
 
-                // Stubbed health checks (Phase 3): structure only.
                 let checks = vec![
                     exchange::CheckResult {
                         name: "auth_format".to_string(),
@@ -176,7 +171,6 @@ fn main() -> anyhow::Result<()> {
                     checks,
                 };
 
-                // Write connect evidence (JSON). Do NOT include secret values.
                 let ev = serde_json::json!({
                     "ok": result.ok,
                     "baseline_tag": "baseline-sealed",
@@ -199,6 +193,43 @@ fn main() -> anyhow::Result<()> {
                         "connect failed (missing secrets) (see evidence: {})",
                         a.evidence
                     );
+                }
+            }
+        },
+
+        cli::Command::Md(m) => match m {
+            cli::MdCmd::List => {
+                let outj = md::md_list();
+                println!("{}", serde_json::to_string(&outj)?);
+            }
+            cli::MdCmd::Start(a) => {
+                std::fs::create_dir_all("md_out")?;
+                let ex = a.exchange.to_lowercase();
+                if ex != "binance" {
+                    anyhow::bail!(
+                        "md start not implemented for {} in Phase 4 (only binance)",
+                        ex
+                    );
+                }
+
+                let r = md::start_binance_depth(&a.symbol, &a.log_path)?;
+                let ev = serde_json::json!({
+                    "ok": r.ok,
+                    "baseline_tag": "baseline-sealed",
+                    "git_head": out::git_head(),
+                    "mode": format!("{:?}", cfg.mode).to_lowercase(),
+                    "md_start": r
+                });
+
+                let dir = std::path::Path::new(&a.evidence)
+                    .parent()
+                    .unwrap_or(std::path::Path::new("."));
+                std::fs::create_dir_all(dir)?;
+                std::fs::write(&a.evidence, serde_json::to_string_pretty(&ev)?)?;
+
+                println!("{}", serde_json::to_string(&ev)?);
+                if !r.ok {
+                    anyhow::bail!("md start failed (see evidence: {})", a.evidence);
                 }
             }
         },

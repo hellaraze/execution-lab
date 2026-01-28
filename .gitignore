@@ -30,3 +30,5 @@ evidence/*.json
 
 secrets/
 *.secrets.*
+
+md_out/

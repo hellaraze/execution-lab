@@ -13,81 +13,76 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Command {
-    /// Deterministic demo run (offline)
     Demo(DemoArgs),
-
-    /// Replay run (offline)
     Replay(ReplayArgs),
 
-    /// Exchange registry and connect workflow
     #[command(subcommand)]
     Exchange(ExchangeCmd),
 
-    /// Paper mode (disabled)
+    #[command(subcommand)]
+    Md(MdCmd),
+
     Paper,
-
-    /// Live mode (hard-disabled)
     Live,
-
-    /// System status (JSON)
     Status,
-
-    /// System health (JSON)
     Health,
-
-    /// Diagnostics (JSON)
     Diagnose,
 }
 
 #[derive(Subcommand)]
 pub enum ExchangeCmd {
-    /// List supported exchanges and capabilities
     List,
-
-    /// Connect an exchange using a secrets file (TOML)
     Connect(ExchangeConnectArgs),
 }
 
 #[derive(clap::Args)]
 pub struct ExchangeConnectArgs {
-    /// Exchange id (e.g. binance, okx, bybit)
     pub exchange: String,
-
-    /// Path to secrets TOML (never logged)
     #[arg(long)]
     pub secrets_file: String,
-
-    /// Where to write connect evidence JSON
     #[arg(long, default_value = "evidence/connect_evidence.json")]
+    pub evidence: String,
+}
+
+#[derive(Subcommand)]
+pub enum MdCmd {
+    List,
+    Start(MdStartArgs),
+}
+
+#[derive(clap::Args)]
+pub struct MdStartArgs {
+    pub exchange: String,
+
+    /// Symbol for depth stream (binance default: BTCUSDT)
+    #[arg(long, default_value = "BTCUSDT")]
+    pub symbol: String,
+
+    /// Output path for NDJSON (binance_depth writes ndjson in Phase 4)
+    #[arg(long, default_value = "md_out/binance_depth.ndjson")]
+    pub log_path: String,
+
+    /// Evidence JSON path
+    #[arg(long, default_value = "evidence/md_start_evidence.json")]
     pub evidence: String,
 }
 
 #[derive(clap::Args)]
 pub struct DemoArgs {
-    /// Path to input eventlog
     #[arg(long)]
     pub input: String,
-
-    /// Where to write evidence JSON
     #[arg(long, default_value = "evidence/demo_evidence.json")]
     pub evidence: String,
-
-    /// How many rows to request from D2 scan
     #[arg(long, default_value_t = 20)]
     pub top_n: u32,
 }
 
 #[derive(clap::Args)]
 pub struct ReplayArgs {
-    /// Path to input eventlog
     #[arg(long)]
     pub input: String,
-
-    /// Where to write evidence JSON
     #[arg(long, default_value = "evidence/replay_evidence.json")]
     pub evidence: String,
-
-    /// How many rows to request from D2 scan
     #[arg(long, default_value_t = 20)]
     pub top_n: u32,
 }
