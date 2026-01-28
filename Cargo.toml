@@ -19,7 +19,7 @@ members = [
   "el_obs",
   "el_contracts",
   "contracts_bridge",
-  "app",
+  "app", "el_runtime",
 ]
 resolver = "2"
 

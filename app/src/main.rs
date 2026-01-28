@@ -1,261 +1,181 @@
-use clap::Parser;
-use elctl::{cli, config, evidence, exchange, md, out, run};
-use std::process::Command;
+use clap::{Parser, Subcommand};
+use serde::Serialize;
+use sha2::{Digest, Sha256};
+use std::fs;
+use std::io::Write as _;
+use std::path::{Path, PathBuf};
+
+#[derive(Parser, Debug)]
+#[command(
+    name = "execution-lab",
+    version,
+    about = "Institutional-grade execution infrastructure (product CLI)"
+)]
+struct Cli {
+    #[command(subcommand)]
+    cmd: Cmd,
+}
+
+#[derive(Subcommand, Debug)]
+enum Cmd {
+    /// Connect an exchange (stub)
+    Connect { exchange: String },
+
+    /// Load an eventlog (stub)
+    Load { eventlog: PathBuf },
+
+    /// Run scan (stub)
+    Run {
+        #[arg(long, default_value = "replay")]
+        mode: String,
+        #[arg(long)]
+        eventlog: Option<PathBuf>,
+    },
+
+    /// Show last decisions (stub)
+    Show,
+
+    /// Demo: deterministic replay on built-in fixture
+    Demo,
+
+    /// Bundle: run demo + produce evidence bundle (NO python)
+    Bundle,
+}
+
+#[derive(Serialize)]
+struct FileEntry {
+    sha256: String,
+    bytes: u64,
+}
+
+#[derive(Serialize)]
+struct Manifest {
+    ts_utc: String,
+    app: String,
+    cmd: Vec<String>,
+    cwd: String,
+    files: std::collections::BTreeMap<String, FileEntry>,
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    let mut h = Sha256::new();
+    h.update(bytes);
+    hex::encode(h.finalize())
+}
+
+fn write_file(path: &Path, bytes: &[u8]) -> anyhow::Result<FileEntry> {
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(path, bytes)?;
+    let meta = fs::metadata(path)?;
+    Ok(FileEntry {
+        sha256: sha256_hex(bytes),
+        bytes: meta.len(),
+    })
+}
+
+fn run_demo_to_bytes() -> anyhow::Result<Vec<u8>> {
+    let eventlog = PathBuf::from("replay/tests/data/binance_depth_fixture.eventlog");
+    let cfg = el_runtime::RuntimeConfig {
+        mode: el_runtime::Mode::Replay,
+        eventlog: Some(eventlog),
+    };
+
+    let mut buf: Vec<u8> = Vec::new();
+    el_runtime::run_to(cfg, &mut buf)?;
+    Ok(buf)
+}
+
+fn bundle() -> anyhow::Result<()> {
+    let out_dir = PathBuf::from("demo/out/last_run");
+    fs::create_dir_all(&out_dir)?;
+
+    let ts = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+
+    let demo_out = run_demo_to_bytes()?;
+
+    let stdout_path = out_dir.join("stdout.txt");
+    let runlog_path = out_dir.join("run.log");
+    let manifest_path = out_dir.join("manifest.json");
+    let sha_path = out_dir.join("sha256.txt");
+
+    let mut files = std::collections::BTreeMap::new();
+    files.insert(
+        "stdout.txt".to_string(),
+        write_file(&stdout_path, &demo_out)?,
+    );
+    files.insert("run.log".to_string(), write_file(&runlog_path, &demo_out)?);
+
+    let manifest = Manifest {
+        ts_utc: ts,
+        app: "execution-lab".to_string(),
+        cmd: vec!["execution-lab".to_string(), "demo".to_string()],
+        cwd: ".".to_string(),
+        files: files.clone(),
+    };
+
+    let manifest_json = serde_json::to_vec_pretty(&manifest)?;
+    files.insert(
+        "manifest.json".to_string(),
+        write_file(&manifest_path, &manifest_json)?,
+    );
+
+    // sha256.txt (stable order)
+    let mut lines: Vec<String> = Vec::new();
+    for name in ["manifest.json", "stdout.txt", "run.log"] {
+        let p = out_dir.join(name);
+        let b = fs::read(&p)?;
+        lines.push(format!("{}  {}", sha256_hex(&b), name));
+    }
+    let sha_txt = lines.join("\n") + "\n";
+    files.insert(
+        "sha256.txt".to_string(),
+        write_file(&sha_path, sha_txt.as_bytes())?,
+    );
+
+    // emit minimal success markers
+    println!("BUNDLE_OK");
+    println!("OUT={}", out_dir.display());
+    Ok(())
+}
 
 fn main() -> anyhow::Result<()> {
-    let args = cli::Cli::parse();
-    let cfg = config::load(&args.config)?;
+    let cli = Cli::parse();
 
-    match args.cmd {
-        cli::Command::Demo(a) => {
-            let mut c = Command::new("cargo");
-            c.args([
-                "run",
-                "-q",
-                "-p",
-                "d2",
-                "--features",
-                "replay-ro",
-                "--bin",
-                "d2_scan",
-                "--",
-                &a.input,
-                "--top-n",
-                &a.top_n.to_string(),
-            ]);
-
-            let cmd_vec = vec![
-                "cargo".to_string(),
-                "run".to_string(),
-                "-q".to_string(),
-                "-p".to_string(),
-                "d2".to_string(),
-                "--features".to_string(),
-                "replay-ro".to_string(),
-                "--bin".to_string(),
-                "d2_scan".to_string(),
-                "--".to_string(),
-                a.input.clone(),
-                "--top-n".to_string(),
-                a.top_n.to_string(),
-            ];
-
-            let r = run::run_cmd(c)?;
-            let ev = evidence::Evidence {
-                ok: r.exit_code == 0,
-                baseline_tag: "baseline-sealed",
-                git_head: out::git_head(),
-                mode: format!("{:?}", cfg.mode).to_lowercase(),
-                input: a.input.clone(),
-                tool: evidence::ToolRun {
-                    cmd: cmd_vec,
-                    exit_code: r.exit_code,
-                    stdout: r.stdout,
-                    stderr: r.stderr,
+    match cli.cmd {
+        Cmd::Connect { exchange } => {
+            println!("app: connect OK (exchange={})", exchange);
+        }
+        Cmd::Load { eventlog } => {
+            println!("app: load OK (eventlog={})", eventlog.display());
+        }
+        Cmd::Run { mode, eventlog } => {
+            let cfg = match mode.as_str() {
+                "replay" => el_runtime::RuntimeConfig {
+                    mode: el_runtime::Mode::Replay,
+                    eventlog,
                 },
-            };
-            evidence::write_json(&a.evidence, &ev)?;
-            println!("{}", serde_json::to_string(&ev)?);
-            if !ev.ok {
-                anyhow::bail!("demo failed (see evidence: {})", a.evidence);
-            }
-        }
-
-        cli::Command::Replay(a) => {
-            let mut c = Command::new("cargo");
-            c.args([
-                "run",
-                "-q",
-                "-p",
-                "d2",
-                "--features",
-                "replay-ro",
-                "--bin",
-                "d2_scan",
-                "--",
-                &a.input,
-                "--top-n",
-                &a.top_n.to_string(),
-            ]);
-
-            let cmd_vec = vec![
-                "cargo".to_string(),
-                "run".to_string(),
-                "-q".to_string(),
-                "-p".to_string(),
-                "d2".to_string(),
-                "--features".to_string(),
-                "replay-ro".to_string(),
-                "--bin".to_string(),
-                "d2_scan".to_string(),
-                "--".to_string(),
-                a.input.clone(),
-                "--top-n".to_string(),
-                a.top_n.to_string(),
-            ];
-
-            let r = run::run_cmd(c)?;
-            let ev = evidence::Evidence {
-                ok: r.exit_code == 0,
-                baseline_tag: "baseline-sealed",
-                git_head: out::git_head(),
-                mode: format!("{:?}", cfg.mode).to_lowercase(),
-                input: a.input.clone(),
-                tool: evidence::ToolRun {
-                    cmd: cmd_vec,
-                    exit_code: r.exit_code,
-                    stdout: r.stdout,
-                    stderr: r.stderr,
+                "live" => el_runtime::RuntimeConfig {
+                    mode: el_runtime::Mode::Live,
+                    eventlog: None,
                 },
+                other => return Err(anyhow::anyhow!("unknown --mode={}", other)),
             };
-            evidence::write_json(&a.evidence, &ev)?;
-            println!("{}", serde_json::to_string(&ev)?);
-            if !ev.ok {
-                anyhow::bail!("replay failed (see evidence: {})", a.evidence);
-            }
+            el_runtime::run(cfg)?;
+            println!("app: run OK");
         }
-
-        cli::Command::Exchange(x) => match x {
-            cli::ExchangeCmd::List => println!("{}", serde_json::to_string(&exchange::registry())?),
-            cli::ExchangeCmd::Connect(a) => {
-                let ex = exchange::find_exchange(&a.exchange)
-                    .ok_or_else(|| anyhow::anyhow!("unknown exchange: {}", a.exchange))?;
-
-                let s = exchange::load_secrets_toml(&a.secrets_file)?;
-                let missing = s.missing_for(ex.required_secrets);
-
-                let mut present = Vec::new();
-                for k in ex.required_secrets {
-                    let has = match *k {
-                        "api_key" => s.api_key.as_ref().map(|v| !v.is_empty()).unwrap_or(false),
-                        "api_secret" => s
-                            .api_secret
-                            .as_ref()
-                            .map(|v| !v.is_empty())
-                            .unwrap_or(false),
-                        "passphrase" => s
-                            .passphrase
-                            .as_ref()
-                            .map(|v| !v.is_empty())
-                            .unwrap_or(false),
-                        _ => false,
-                    };
-                    if has {
-                        present.push(k.to_string());
-                    }
-                }
-
-                let checks = vec![
-                    exchange::CheckResult {
-                        name: "auth_format".to_string(),
-                        ok: missing.is_empty(),
-                        detail: "required secrets present".to_string(),
-                    },
-                    exchange::CheckResult {
-                        name: "clock_skew".to_string(),
-                        ok: true,
-                        detail: "stubbed".to_string(),
-                    },
-                    exchange::CheckResult {
-                        name: "rate_limits".to_string(),
-                        ok: true,
-                        detail: "stubbed".to_string(),
-                    },
-                ];
-
-                let result = exchange::ConnectResult {
-                    ok: missing.is_empty(),
-                    exchange: ex.id.to_string(),
-                    secrets_present: present,
-                    secrets_missing: missing,
-                    checks,
-                };
-
-                let ev = serde_json::json!({
-                    "ok": result.ok,
-                    "baseline_tag": "baseline-sealed",
-                    "git_head": out::git_head(),
-                    "mode": format!("{:?}", cfg.mode).to_lowercase(),
-                    "exchange": ex.id,
-                    "secrets_file": elctl::redact::redact(&a.secrets_file),
-                    "result": result
-                });
-
-                let dir = std::path::Path::new(&a.evidence)
-                    .parent()
-                    .unwrap_or(std::path::Path::new("."));
-                std::fs::create_dir_all(dir)?;
-                std::fs::write(&a.evidence, serde_json::to_string_pretty(&ev)?)?;
-
-                println!("{}", serde_json::to_string(&ev)?);
-                if !result.ok {
-                    anyhow::bail!(
-                        "connect failed (missing secrets) (see evidence: {})",
-                        a.evidence
-                    );
-                }
-            }
-        },
-
-        cli::Command::Md(m) => match m {
-            cli::MdCmd::List => {
-                let outj = md::md_list();
-                println!("{}", serde_json::to_string(&outj)?);
-            }
-            cli::MdCmd::Start(a) => {
-                std::fs::create_dir_all("md_out")?;
-                let ex = a.exchange.to_lowercase();
-                if ex != "binance" {
-                    anyhow::bail!(
-                        "md start not implemented for {} in Phase 4 (only binance)",
-                        ex
-                    );
-                }
-
-                let r = md::start_binance_depth(&a.symbol, &a.log_path)?;
-                let ev = serde_json::json!({
-                    "ok": r.ok,
-                    "baseline_tag": "baseline-sealed",
-                    "git_head": out::git_head(),
-                    "mode": format!("{:?}", cfg.mode).to_lowercase(),
-                    "md_start": r
-                });
-
-                let dir = std::path::Path::new(&a.evidence)
-                    .parent()
-                    .unwrap_or(std::path::Path::new("."));
-                std::fs::create_dir_all(dir)?;
-                std::fs::write(&a.evidence, serde_json::to_string_pretty(&ev)?)?;
-
-                println!("{}", serde_json::to_string(&ev)?);
-                if !r.ok {
-                    anyhow::bail!("md start failed (see evidence: {})", a.evidence);
-                }
-            }
-        },
-
-        cli::Command::Paper => anyhow::bail!("paper mode is disabled"),
-        cli::Command::Live => anyhow::bail!("live mode is disabled"),
-
-        cli::Command::Status => {
-            let outj = out::StatusOut {
-                ok: true,
-                baseline_tag: "baseline-sealed",
-                git_head: out::git_head(),
-                mode: format!("{:?}", cfg.mode).to_lowercase(),
-            };
-            println!("{}", serde_json::to_string(&outj)?);
+        Cmd::Show => {
+            println!("app: show OK");
         }
-        cli::Command::Health => {
-            println!("{}", serde_json::to_string(&out::HealthOut { ok: true })?)
+        Cmd::Demo => {
+            let out = run_demo_to_bytes()?;
+            std::io::stdout().write_all(&out)?;
+            println!("app: demo OK");
         }
-        cli::Command::Diagnose => println!(
-            "{}",
-            serde_json::to_string(&out::DiagnoseOut {
-                ok: true,
-                notes: vec!["no issues detected".to_string()]
-            })?
-        ),
+        Cmd::Bundle => {
+            bundle()?;
+        }
     }
 
     Ok(())
