@@ -26,11 +26,19 @@ impl KillSwitch {
     pub fn new() -> Self {
         Self(Arc::new(AtomicBool::new(false)))
     }
+
+    pub fn kill(&self) {
+        self.0.store(true, Ordering::SeqCst);
+    }
+
     pub fn is_killed(&self) -> bool {
         self.0.load(Ordering::SeqCst)
     }
-    pub fn kill(&self) {
-        self.0.store(true, Ordering::SeqCst);
+}
+
+impl Default for KillSwitch {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
