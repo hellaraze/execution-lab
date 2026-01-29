@@ -43,3 +43,6 @@ demo/out/
 # tauri updater signing key (private)
 /keys/tauri_updater.key
 !/keys/tauri_updater.key.pub
+keys/
+keys/tauri_updater.key
+!keys/tauri_updater.key.pub
