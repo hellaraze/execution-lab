@@ -9,9 +9,11 @@ on:
         description: "Create as draft"
         required: false
         default: "true"
+
 jobs:
   windows-release:
-    \1    env:
+    runs-on: windows-latest
+    env:
       TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
@@ -19,14 +21,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+
       - name: Quality gate (workspace)
         shell: bash
         run: |
@@ -34,6 +39,7 @@ jobs:
           cargo fmt
           cargo clippy -q --workspace --all-targets -- -D warnings
           cargo test -q --workspace
+
       - name: Build Tauri bundles (Windows)
         shell: powershell
         run: |
@@ -43,15 +49,16 @@ jobs:
           } else {
             throw "Missing tools\win\build_installer.ps1 (Phase 7 expected)."
           }
-      - name: Produce release artifacts (notes + update manifest)
+
+      - name: Produce release artifacts (notes + updater feed)
         shell: bash
         run: |
           set -e
           mkdir -p dist/release
           tools/release/mk_release_notes.sh dist/release/RELEASE_NOTES.md
           tools/release/mk_latest_json.sh dist/release/latest.json
-          echo "REPLACE_WITH_REAL_SIGNATURE" > dist/release/latest.json.sig
           ls -la dist/release
+
       - name: Upload artifacts (CI)
         uses: actions/upload-artifact@v4
         with:
@@ -59,6 +66,7 @@ jobs:
           path: |
             dist/phase7/windows/bundle/**
             dist/release/**
+
       - name: Create GitHub Release (draft)
         uses: softprops/action-gh-release@v2
         with:
@@ -67,5 +75,4 @@ jobs:
           files: |
             dist/phase7/windows/bundle/**/*
             dist/release/*
-            dist/release/latest.json.sig
           body_path: dist/release/RELEASE_NOTES.md
