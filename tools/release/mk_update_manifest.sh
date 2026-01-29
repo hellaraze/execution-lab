@@ -13,7 +13,7 @@ cat > "$OUT" <<EOF2
   "notes": "placeholder update manifest (Phase 11 skeleton)",
   "targets": {
     "windows-x86_64": {
-      "url": "https://example.com/execution-lab/releases/$VER/windows/installer.exe",
+      "url": "https://github.com/' .  . '/releases/download/v$VER/installer.exe",
       "signature": "REPLACE_WITH_REAL_SIGNATURE"
     }
   }

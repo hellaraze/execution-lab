@@ -48,6 +48,7 @@ jobs:
           mkdir -p dist/release
           tools/release/mk_release_notes.sh dist/release/RELEASE_NOTES.md
           tools/release/mk_update_manifest.sh dist/release/update.json
+          echo "REPLACE_WITH_REAL_SIGNATURE" > dist/release/update.json.sig
           ls -la dist/release
       - name: Upload artifacts (CI)
         uses: actions/upload-artifact@v4
@@ -64,4 +65,5 @@ jobs:
           files: |
             dist/phase7/windows/bundle/**/*
             dist/release/*
+            dist/release/update.json.sig
           body_path: dist/release/RELEASE_NOTES.md

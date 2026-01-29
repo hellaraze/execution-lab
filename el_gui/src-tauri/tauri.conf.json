@@ -36,7 +36,7 @@
     "updater": {
       "active": true,
       "dialog": true,
-      "endpoints": ["https://example.com/execution-lab/releases/{{target}}/{{current_version}}"],
+      "endpoints": ["https://github.com/hellaraze/execution-lab/releases/download/v{{current_version}}/update.json"],
       "pubkey": "REPLACE_WITH_TAURI_UPDATER_PUBLIC_KEY"
     }
   }
