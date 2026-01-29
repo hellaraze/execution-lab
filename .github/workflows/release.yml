@@ -1,0 +1,67 @@
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create (e.g. v0.1.0)"
+        required: true
+      draft:
+        description: "Create as draft"
+        required: false
+        default: "true"
+jobs:
+  windows-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Quality gate (workspace)
+        shell: bash
+        run: |
+          set -e
+          cargo fmt
+          cargo clippy -q --workspace --all-targets -- -D warnings
+          cargo test -q --workspace
+      - name: Build Tauri bundles (Windows)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = "Stop"
+          if (Test-Path "tools\win\build_installer.ps1") {
+            powershell -NoProfile -ExecutionPolicy Bypass -File "tools\win\build_installer.ps1"
+          } else {
+            throw "Missing tools\win\build_installer.ps1 (Phase 7 expected)."
+          }
+      - name: Produce release artifacts (notes + update manifest)
+        shell: bash
+        run: |
+          set -e
+          mkdir -p dist/release
+          tools/release/mk_release_notes.sh dist/release/RELEASE_NOTES.md
+          tools/release/mk_update_manifest.sh dist/release/update.json
+          ls -la dist/release
+      - name: Upload artifacts (CI)
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: |
+            dist/phase7/windows/bundle/**
+            dist/release/**
+      - name: Create GitHub Release (draft)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          draft: ${{ inputs.draft == 'true' }}
+          files: |
+            dist/phase7/windows/bundle/**/*
+            dist/release/*
+          body_path: dist/release/RELEASE_NOTES.md

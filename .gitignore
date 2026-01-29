@@ -36,3 +36,6 @@ runs/
 state/
 demo/out/
 /tmp/
+
+# build/release artifacts
+/dist/
