@@ -29,16 +29,17 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
-  }
-
-  ,"plugins": {
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
     "updater": {
       "active": true,
       "dialog": true,
-      "endpoints": ["https://github.com/hellaraze/execution-lab/releases/download/v{{current_version}}/update.json"],
-      "pubkey": "REPLACE_WITH_TAURI_UPDATER_PUBLIC_KEY"
+      "endpoints": [
+        "https://github.com/hellaraze/execution-lab/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc1MjhFQTEzQkFGNEVCRjEKUldUeDYvUzZFK29vZGRTOTVBOTBFRUVlV2tUWGt3RDk2NEQzNHFyTkpRcnhKWmxodllyUmhCaHkK"
     }
   }
-
 }

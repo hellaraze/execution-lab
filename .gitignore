@@ -39,3 +39,7 @@ demo/out/
 
 # build/release artifacts
 /dist/
+
+# tauri updater signing key (private)
+/keys/tauri_updater.key
+!/keys/tauri_updater.key.pub
