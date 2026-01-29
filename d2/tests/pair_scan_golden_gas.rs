@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use std::process::Command;
 
 fn run(args: &[&str]) -> (i32, String) {
@@ -10,28 +11,23 @@ fn run(args: &[&str]) -> (i32, String) {
 
 #[test]
 fn d2_pair_scan_emits_gas_deterministically_with_shift() {
-    const MD_A: &str = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../replay/tests/data/md_a.eventlog"
-    );
-    const MD_B: &str = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../replay/tests/data/md_b.eventlog"
-    );
-    const OBS: &str = concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../replay/tests/data/_obs_pair_golden.jsonl"
-    );
+    // Use a COMMITTED fixture (CI-safe). We pass the same file for A and B and
+    // rely on --b-shift-bps to synthesize deterministic GAS.
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .expect("workspace root")
+        .to_path_buf();
 
-    // ensure inputs exist (cwd-independent)
-    assert!(std::path::Path::new(MD_A).exists(), "missing MD_A: {MD_A}");
-    assert!(std::path::Path::new(MD_B).exists(), "missing MD_B: {MD_B}");
+    let base = root.join("replay/tests/data/binance_depth_fixture.eventlog");
+    assert!(base.exists(), "missing BASE fixture: {}", base.display());
 
-    // obs output (best-effort cleanup)
-    let _ = std::fs::remove_file(OBS);
+    let obs = std::env::temp_dir().join("execution_lab_obs_pair_golden.jsonl");
+    let _ = std::fs::remove_file(&obs);
 
-    // run the bin; must be GAS with shift=150bps
-    let (code, out) = run(&[
+    let base_s = base.to_string_lossy().into_owned();
+    let obs_s = obs.to_string_lossy().into_owned();
+
+    let args: Vec<&str> = vec![
         "run",
         "-q",
         "-p",
@@ -41,8 +37,8 @@ fn d2_pair_scan_emits_gas_deterministically_with_shift() {
         "--bin",
         "d2_pair_scan",
         "--",
-        MD_A,
-        MD_B,
+        base_s.as_str(),
+        base_s.as_str(),
         "--epsilon",
         "0.0001",
         "--min-edge-bps",
@@ -50,20 +46,19 @@ fn d2_pair_scan_emits_gas_deterministically_with_shift() {
         "--b-shift-bps",
         "150",
         "--obs-out",
-        OBS,
-    ]);
+        obs_s.as_str(),
+    ];
+
+    let (code, out) = run(&args);
     assert_eq!(code, 0, "non-zero exit:\n{out}");
     assert!(out.contains("GAS reason=Pass"), "expected GAS:\n{out}");
 
-    // obs file must exist and contain a RiskEvaluated line with decision=Gas
-    let s = std::fs::read_to_string(OBS).expect("read obs");
+    let s = std::fs::read_to_string(&obs).expect("read obs");
     assert!(
         s.contains("\"RiskEvaluated\""),
         "missing RiskEvaluated:\n{s}"
     );
     assert!(s.contains("decision=Gas"), "missing decision=Gas:\n{s}");
-
-    // timestamp contract
     assert!(s.contains("\"ts\""), "missing ts:\n{s}");
     assert!(s.contains("\"source\""), "missing ts.source:\n{s}");
 }
