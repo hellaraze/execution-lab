@@ -33,6 +33,12 @@ enum Cmd {
         #[arg(long, default_value = "replay")]
         kind: String,
     },
+
+    /// Create a proof pack for an existing run directory
+    ProofPack {
+        #[arg(long)]
+        run_dir: PathBuf,
+    },
 }
 
 fn real_main() -> anyhow::Result<()> {
@@ -52,6 +58,11 @@ fn real_main() -> anyhow::Result<()> {
             el_runtime::product::init_config(&out, &kind)?;
             println!("INIT_OK");
             println!("OUT={}", out.display());
+        }
+        Cmd::ProofPack { run_dir } => {
+            let p = el_runtime::proof_pack::create_proof_pack(&run_dir)?;
+            println!("PROOF_OK");
+            println!("PACK={}", p.display());
         }
     }
     Ok(())

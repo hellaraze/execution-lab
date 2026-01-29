@@ -46,6 +46,10 @@ echo
 echo "=== SMOKE (help should not crash) ==="
 cargo run -q -p elctl --bin execution-lab -- --help >/dev/null
 cargo run -q -p elctl --bin execution-lab -- validate-config --config configs/replay.toml >/dev/null
+# Phase 12: proof-pack smoke
+cargo run -q -p elctl --bin execution-lab -- run --config configs/replay.toml > /tmp/el_run_out.txt
+RUN_DIR=$(grep -m1 "^RUN_DIR=" /tmp/el_run_out.txt | sed "s/^RUN_DIR=//")
+cargo run -q -p elctl --bin execution-lab -- proof-pack --run-dir "$RUN_DIR" >/dev/null
 cargo run -q -p d2 --features replay-ro --bin d2_scan -- --help >/dev/null
 echo "OK: smoke"
 echo

@@ -36,3 +36,5 @@ pub fn run_to(mut cfg: RuntimeConfig, out: &mut dyn Write) -> anyhow::Result<()>
 
 pub mod product;
 pub use product::ProductConfigV1;
+
+pub mod proof_pack;
