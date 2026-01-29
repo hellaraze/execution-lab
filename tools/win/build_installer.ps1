@@ -53,3 +53,9 @@ Copy-Item -Recurse -Force $Bundle (Join-Path $Out "bundle")
 
 Write-Host "OK: copied bundles to $Out\bundle"
 Write-Host "TIP: look for .msi under $Out\bundle\msi and .exe under $Out\bundle\nsis (if enabled)"
+
+# === SIGNING STEP (optional) ===
+# After build, you can sign produced MSI/EXE via:
+#   tools\win\sign_artifacts.ps1 -CertThumbprint "<THUMBPRINT>" -InputDir "dist\phase7\windows\bundle"
+# or:
+#   tools\win\sign_artifacts.ps1 -PfxPath "C:\path\cert.pfx" -PfxPassword "<pwd>" -InputDir "dist\phase7\windows\bundle"
