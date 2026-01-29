@@ -33,3 +33,6 @@ pub fn run_to(mut cfg: RuntimeConfig, out: &mut dyn Write) -> anyhow::Result<()>
     }
     Ok(())
 }
+
+pub mod product;
+pub use product::ProductConfigV1;

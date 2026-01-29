@@ -1,0 +1,7 @@
+config_version = 1
+mode = "replay"
+eventlog = "replay/tests/data/binance_depth_fixture.eventlog"
+
+[paths]
+state_dir = "state"
+runs_dir = "runs"

@@ -1,0 +1,15 @@
+config_version = 1
+mode = "live"
+live_mode = "post_only"
+
+[paths]
+state_dir = "state"
+runs_dir = "runs"
+
+[risk]
+enabled = true
+max_notional = 10.0
+
+[kill_switch]
+enabled = true
+path = "state/KILL"

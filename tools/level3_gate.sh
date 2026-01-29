@@ -44,7 +44,8 @@ echo "OK: tests release all-features"
 echo
 
 echo "=== SMOKE (help should not crash) ==="
-cargo run -q -p elctl -- --help >/dev/null
+cargo run -q -p elctl --bin execution-lab -- --help >/dev/null
+cargo run -q -p elctl --bin execution-lab -- validate-config --config configs/replay.toml >/dev/null
 cargo run -q -p d2 --features replay-ro --bin d2_scan -- --help >/dev/null
 echo "OK: smoke"
 echo

@@ -1,7 +1,7 @@
+pub mod binance_live;
 pub mod normalized;
 pub mod seq;
 pub mod wire;
-
 use normalized::{NormalizedEvent, NormalizedKind};
 use wire::WireEvent;
 
