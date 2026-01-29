@@ -1,4 +1,5 @@
 [workspace]
+exclude = ["el_gui/src-tauri"]
 members = [
   "core",
   "eventlog",
@@ -20,7 +21,7 @@ members = [
   "el_contracts",
   "contracts_bridge",
   "app",
-  "el_runtime",
+  "el_runtime", "el_app", "el_gui",
 ]
 resolver = "2"
 

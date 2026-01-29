@@ -422,6 +422,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "el_app"
+version = "0.1.0"
+
+[[package]]
 name = "el_contracts"
 version = "0.1.0"
 dependencies = [
@@ -439,6 +443,10 @@ dependencies = [
  "time",
  "uuid",
 ]
+
+[[package]]
+name = "el_gui"
+version = "0.1.0"
 
 [[package]]
 name = "el_obs"

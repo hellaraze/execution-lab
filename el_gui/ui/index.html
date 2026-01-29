@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Execution Lab</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 18px; }
+    .top { display:flex; align-items:center; justify-content:space-between; margin-bottom: 12px; }
+    .brand { font-weight:700; font-size:18px; }
+    .meta { font-size:12px; opacity:0.7; }
+    .tabs { display:flex; gap:8px; margin: 12px 0; }
+    .tab { padding:8px 10px; border:1px solid #ddd; border-radius:10px; cursor:pointer; user-select:none; }
+    .tab.active { border-color:#999; }
+    .card { border:1px solid #ddd; border-radius:14px; padding:14px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    button { padding:8px 10px; border:1px solid #ddd; border-radius:10px; cursor:pointer; }
+    pre { white-space:pre-wrap; border:1px solid #ddd; padding:12px; border-radius:14px; height:360px; overflow:auto; }
+    .kv { display:grid; grid-template-columns: 140px 1fr; gap:8px 12px; }
+    .muted { opacity:0.75; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">Execution Lab</div>
+    <div class="meta" id="meta">…</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="dash">Dashboard</div>
+    <div class="tab" data-tab="proof">Proof</div>
+    <div class="tab" data-tab="logs">Logs</div>
+    <div class="tab" data-tab="about">About</div>
+  </div>
+
+  <div class="card" id="view"></div>
+
+  <script>
+    const invoke = (cmd, args) => window.__TAURI__.core.invoke(cmd, args);
+    const view = document.getElementById("view");
+    let appInfo = null;
+
+    function setActive(tabName){
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === tabName));
+    }
+
+    async function refreshMeta(){
+      try {
+        appInfo = await invoke("app_info");
+        document.getElementById("meta").textContent =
+          `v${appInfo.version} · ${appInfo.git_sha} · ${appInfo.build_time_utc}`;
+      } catch {
+        document.getElementById("meta").textContent = "meta unavailable";
+      }
+    }
+
+    async function runtimeStatus(){
+      try { return await invoke("runtime_status"); } catch { return "err"; }
+    }
+
+    async function logTail(){
+      try { return await invoke("runtime_log_tail", { maxChars: 20000 }); } catch (e) { return "ERROR(log): " + e; }
+    }
+
+    function renderDashboard(st){
+      view.innerHTML = `
+        <div class="row">
+          <div style="flex:1; min-width: 280px;">
+            <div class="kv">
+              <div class="muted">Runtime</div><div><b>${st}</b></div>
+              <div class="muted">Mode</div><div>proof/demo (level3 gate)</div>
+            </div>
+          </div>
+          <div style="min-width: 280px;">
+            <button id="btn-status">Refresh</button>
+          </div>
+        </div>
+        <div style="margin-top:12px" class="muted">
+          Buyer-facing shell: thin UI over sealed runtime. No strategy logic here.
+        </div>
+      `;
+      document.getElementById("btn-status").onclick = async () => route("dash");
+    }
+
+    function renderProof(st){
+      view.innerHTML = `
+        <div class="row" style="margin-bottom:12px">
+          <button id="btn-start">Run Proof Smoke (Level3 Gate)</button>
+          <button id="btn-stop">Stop</button>
+          <div class="muted">status: <b>${st}</b></div>
+        </div>
+        <pre id="out">(loading log...)</pre>
+      `;
+
+      const outEl = document.getElementById("out");
+      const out = (s) => { outEl.textContent = s || "(empty)"; outEl.scrollTop = outEl.scrollHeight; };
+
+      document.getElementById("btn-start").onclick = async () => {
+        out("starting...");
+        try { out(await invoke("runtime_start_level3_gate")); }
+        catch (e) { out("ERROR(start): " + e); }
+      };
+      document.getElementById("btn-stop").onclick = async () => {
+        try { out(await invoke("runtime_stop")); }
+        catch (e) { out("ERROR(stop): " + e); }
+      };
+
+      // polling loop for log while running
+      const tick = async () => {
+        const st2 = await runtimeStatus();
+        if (st2 === "running") out(await logTail());
+      };
+      setInterval(tick, 700);
+
+      (async () => { out(await logTail()); })();
+    }
+
+    function renderLogs(){
+      view.innerHTML = `
+        <div class="row" style="margin-bottom:12px">
+          <button id="btn-refresh-log">Refresh</button>
+        </div>
+        <pre id="out">(loading...)</pre>
+      `;
+      const outEl = document.getElementById("out");
+      const out = (s) => { outEl.textContent = s || "(empty)"; };
+      document.getElementById("btn-refresh-log").onclick = async () => out(await logTail());
+      (async () => out(await logTail()))();
+    }
+
+    function renderAbout(){
+      const ai = appInfo || { version:"?", git_sha:"?", build_time_utc:"?", bundle_id:"?" };
+      view.innerHTML = `
+        <div class="kv">
+          <div class="muted">Product</div><div><b>Execution Lab</b></div>
+          <div class="muted">Version</div><div>${ai.version}</div>
+          <div class="muted">Git</div><div>${ai.git_sha}</div>
+          <div class="muted">Build</div><div>${ai.build_time_utc}</div>
+          <div class="muted">Bundle ID</div><div>${ai.bundle_id}</div>
+        </div>
+        <div style="margin-top:12px" class="muted">
+          Institutional-grade execution infrastructure shell (Phase 6).
+        </div>
+      `;
+    }
+
+    async function route(name){
+      setActive(name);
+      const st = await runtimeStatus();
+      if (name === "dash") return renderDashboard(st);
+      if (name === "proof") return renderProof(st);
+      if (name === "logs") return renderLogs();
+      if (name === "about") return renderAbout();
+    }
+
+    document.querySelectorAll(".tab").forEach(t => t.onclick = () => route(t.dataset.tab));
+
+    (async () => {
+      await refreshMeta();
+      await route("dash");
+    })();
+  </script>
+</body>
+</html>
